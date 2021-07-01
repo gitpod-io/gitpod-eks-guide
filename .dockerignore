@@ -1,0 +1,8 @@
+node_modules
+
+cdk.context.json
+eks-cluster.yaml
+
+.env
+gitpod-values.yaml
+gitpod-ingress.yaml

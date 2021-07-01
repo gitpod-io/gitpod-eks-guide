@@ -1,0 +1,38 @@
+{
+  "name": "gitpod",
+  "version": "0.1.0",
+  "bin": {
+    "addons": "bin/setup.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@aws-cdk/assert": "^1.109.0",
+    "@types/jest": "^26.0.10",
+    "@types/js-yaml": "^4.0.1",
+    "@types/node": "^15.12.2",
+    "@types/uuid": "^8.3.0",
+    "husky": "^6.0.0",
+    "jest": "^26.4.2",
+    "ts-jest": "^26.2.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.3.3"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-eks": "^1.110.1",
+    "@aws-cdk/aws-iam": "^1.110.1",
+    "@aws-cdk/aws-rds": "^1.110.1",
+    "@aws-cdk/aws-secretsmanager": "^1.110.1",
+    "@aws-cdk/core": "^1.110.1",
+    "@aws-sdk/client-secrets-manager": "^3.19.0",
+    "js-yaml": "^4.1.0",
+    "source-map-support": "^0.5.16",
+    "sync-request": "^6.1.0",
+    "uuid": "^8.3.2"
+  }
+}
