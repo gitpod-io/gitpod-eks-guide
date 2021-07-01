@@ -1,0 +1,22 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: jaeger
+  namespace: default
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: purpose
+                operator: In
+                values:
+                  - services
+  strategy: allInOne
+  storage:
+    options:
+      memory:
+        max-traces: 500
+  ingress:
+    enabled: false
