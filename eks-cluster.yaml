@@ -1,0 +1,183 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: gitpod
+  region: us-west-2
+  version: "1.20"
+
+iam:
+  withOIDC: true
+
+  serviceAccounts:
+    - metadata:
+        name: aws-load-balancer-controller
+        namespace: kube-system
+      wellKnownPolicies:
+        awsLoadBalancerController: true
+    - metadata:
+        name: ebs-csi-controller-sa
+        namespace: kube-system
+      wellKnownPolicies:
+        ebsCSIController: true
+    - metadata:
+        name: cluster-autoscaler
+        namespace: kube-system
+      wellKnownPolicies:
+        autoScaler: true
+
+availabilityZones:
+  - us-west-2a
+  - us-west-2b
+  - us-west-2c
+  - us-west-2d
+
+vpc:
+  autoAllocateIPv6: false
+  nat:
+    # For production environments user HighlyAvailable
+    # https://eksctl.io/usage/vpc-networking/#nat-gateway
+    gateway: Single
+
+cloudWatch:
+  clusterLogging:
+    enableTypes: ["audit", "authenticator"]
+
+privateCluster:
+  enabled: false
+  additionalEndpointServices:
+  - "autoscaling"
+  - "logs"
+
+nodeGroups:
+  - name: workspaces
+    # disabled when using spot instances
+    #instanceType: m5.large
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 3
+    # because of AWS addons
+    disableIMDSv1: false
+    volumeSize: 50
+    volumeType: gp3
+    privateNetworking: true
+    ami: ami-058176df7676cc2db
+    amiFamily: Ubuntu2004
+    asgMetricsCollection: &asgMetricsCollection
+      - granularity: 1Minute
+        metrics:
+          - GroupMinSize
+          - GroupMaxSize
+          - GroupDesiredCapacity
+          - GroupInServiceInstances
+          - GroupPendingInstances
+          - GroupStandbyInstances
+          - GroupTerminatingInstances
+          - GroupTotalInstances
+    ebsOptimized: true
+    ssh:
+      enableSsm: true
+    taints:
+      dedicated: workspaces:NoSchedule
+    tags:
+      # EC2 tags required for cluster-autoscaler auto-discovery
+      k8s.io/cluster-autoscaler/enabled: "true"
+      k8s.io/cluster-autoscaler/gitpod: "owned"
+      k8s.io/cluster-autoscaler/node-template/label/lifecycle: OnDemand
+      k8s.io/cluster-autoscaler/node-template/label/aws.amazon.com/spot: "true"
+      k8s.io/cluster-autoscaler/node-template/label/purpose: workspaces
+      k8s.io/cluster-autoscaler/node-template/taint/dedicated: "workspaces:NoSchedule"
+    iam:
+      attachPolicyARNs: &attachPolicyARNs
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      withAddonPolicies: &withAddonPolicies
+        albIngress: true
+        autoScaler: true
+        cloudWatch: true
+        certManager: true
+        ebs: true
+    overrideBootstrapCommand: |
+      #!/bin/bash
+
+      export AMI=ami-058176df7676cc2db
+      export CLUSTERNAME=gitpod
+      export NODEGROUP=workspaces
+
+      declare -a LABELS=(
+        alpha.eksctl.io/cluster-name="${CLUSTERNAME}"
+        alpha.eksctl.io/nodegroup-name="${NODEGROUP}"
+        eks.amazonaws.com/capacityType=ON_DEMAND
+        eks.amazonaws.com/nodegroup="${NODEGROUP}"
+        eks.amazonaws.com/nodegroup-image="${AMI}"
+        alpha.eksctl.io/nodegroup-type=unmanaged
+        purpose="${NODEGROUP}"
+      )
+
+      /etc/eks/bootstrap.sh ${CLUSTERNAME} $(printf -- "--kubelet-extra-args '--node-labels=%s'" $(IFS=$','; echo "${LABELS[*]}"))
+
+    instancesDistribution:
+      instanceTypes: ["m5.large","m5.xlarge"]
+      maxPrice: 0.1
+      onDemandBaseCapacity: 0
+      onDemandPercentageAboveBaseCapacity: 0
+      spotInstancePools: 1
+
+  - name: services
+    # disabled when using spot instances
+    #instanceType: m5.large
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 3
+    # because of AWS addons
+    disableIMDSv1: false
+    volumeSize: 50
+    volumeType: gp3
+    privateNetworking: true
+    ami: ami-058176df7676cc2db
+    amiFamily: Ubuntu2004
+    asgMetricsCollection: *asgMetricsCollection
+    ebsOptimized: true
+    ssh:
+      enableSsm: true
+    #taints:
+    #  dedicated: services:NoSchedule
+    tags:
+      # EC2 tags required for cluster-autoscaler auto-discovery
+      k8s.io/cluster-autoscaler/enabled: "true"
+      k8s.io/cluster-autoscaler/gitpod: "owned"
+      k8s.io/cluster-autoscaler/node-template/label/lifecycle: OnDemand
+      k8s.io/cluster-autoscaler/node-template/label/aws.amazon.com/spot: "true"
+      k8s.io/cluster-autoscaler/node-template/label/purpose: services
+      #k8s.io/cluster-autoscaler/node-template/taint/dedicated: "services:NoSchedule"
+    iam:
+      attachPolicyARNs: *attachPolicyARNs
+      withAddonPolicies: *withAddonPolicies
+    overrideBootstrapCommand: |
+      #!/bin/bash
+
+      export AMI=ami-058176df7676cc2db
+      export CLUSTERNAME=gitpod
+      export NODEGROUP=services
+
+      declare -a LABELS=(
+        alpha.eksctl.io/cluster-name="${CLUSTERNAME}"
+        alpha.eksctl.io/nodegroup-name="${NODEGROUP}"
+        eks.amazonaws.com/capacityType=ON_DEMAND
+        eks.amazonaws.com/nodegroup="${NODEGROUP}"
+        eks.amazonaws.com/nodegroup-image="${AMI}"
+        alpha.eksctl.io/nodegroup-type=unmanaged
+        purpose="${NODEGROUP}"
+      )
+
+      /etc/eks/bootstrap.sh ${CLUSTERNAME} $(printf -- "--kubelet-extra-args '--node-labels=%s'" $(IFS=$','; echo "${LABELS[*]}"))
+
+    # Use spot instances
+    instancesDistribution:
+      maxPrice: 0.1
+      instanceTypes: ["m5.large","m5.xlarge"]
+      onDemandBaseCapacity: 0
+      onDemandPercentageAboveBaseCapacity: 0
+      spotInstancePools: 1
