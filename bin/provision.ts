@@ -3,14 +3,12 @@
 import 'source-map-support/register';
 
 import * as cdk from '@aws-cdk/core';
-import { MainApp } from '../lib/main';
+import { ServicesStack } from '../lib/services';
+import { AddonsStack } from '../lib/addons';
+import { GitpodStack } from '../lib/gitpod';
+import { SetupStack } from '../lib/setup';
 
 const app = new cdk.App({});
-
-const clusterName = app.node.tryGetContext('clustername');
-if (!clusterName) {
-  throw new Error("clusterName is not defined.");
-}
 
 const region = app.node.tryGetContext('region');
 if (!region) {
@@ -37,10 +35,28 @@ const env = {
   region
 };
 
-new MainApp(app, 'Gitpod', {
+const setup = new SetupStack(app, 'Setup', {
   env,
-  clusterName,
-  domain,
   identityoidcissuer,
-  certificateArn
+});
+
+const addons = new AddonsStack(app, 'Addons', {
+  env,
+});
+addons.node.addDependency(setup);
+
+const services = new ServicesStack(app, 'Services', {
+  env,
 })
+services.node.addDependency(setup);
+
+const gitpod = new GitpodStack(app, 'Gitpod', {
+  env,
+  domain,
+  certificateArn,
+
+  database: services.database,
+  registry: services.registry,
+})
+gitpod.node.addDependency(services);
+gitpod.node.addDependency(addons);

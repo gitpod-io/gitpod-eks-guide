@@ -1,11 +1,10 @@
 import cdk = require('@aws-cdk/core');
-import eks = require('@aws-cdk/aws-eks');
+
 import { createNamespace, readYamlDocument, loadYaml } from './utils';
 import { KubernetesManifest } from '@aws-cdk/aws-eks';
+import { importCluster } from './cluster-utils';
 
 export interface CertManagerProps extends cdk.StackProps {
-    cluster: eks.ICluster
-
     hostedZoneID?: string
 
     baseDomain?: string
@@ -16,17 +15,19 @@ export class CertManager extends cdk.Construct {
     constructor(scope: cdk.Construct, id: string, props: CertManagerProps) {
         super(scope, id);
 
+        const cluster = importCluster(this, process.env.CLUSTER_NAME);
+
         const namespace = 'cert-manager';
 
-        const ns = createNamespace(namespace, props.cluster);
+        const ns = createNamespace(namespace, cluster);
 
-        const serviceAccount = props.cluster.addServiceAccount('cert-manager', {
+        const serviceAccount = cluster.addServiceAccount('cert-manager', {
             name: 'cert-manager',
             namespace,
         });
         serviceAccount.node.addDependency(ns);
 
-        const helmChart = props.cluster.addHelmChart('CertManagerChart', {
+        const helmChart = cluster.addHelmChart('CertManagerChart', {
             chart: 'cert-manager',
             release: 'cert-manager',
             version: 'v1.4.0',
@@ -66,11 +67,11 @@ export class CertManager extends cdk.Construct {
                 replace(/{{email}}/g, props.email).
                 replace(/{{baseDomain}}/g, props.baseDomain).
                 replace(/{{hostedZoneID}}/g, props.hostedZoneID).
-                replace(/{{region}}/g, props.cluster.stack.region);
+                replace(/{{region}}/g, cluster.stack.region);
 
             const issuerManifest = docArray.split("---").map(e => loadYaml(e));
-            const certManagerIssuer = new KubernetesManifest(props.cluster.stack, "cert-manager-issuer", {
-                cluster: props.cluster,
+            const certManagerIssuer = new KubernetesManifest(cluster.stack, "cert-manager-issuer", {
+                cluster,
                 overwrite: true,
                 manifest: issuerManifest,
             });

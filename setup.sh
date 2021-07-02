@@ -97,7 +97,6 @@ aws ssm put-parameter \
   --value "$(date +%s | sha256sum | base64 | head -c 35 ; echo)"
 
 cdk deploy \
-  --context clustername="${CLUSTER_NAME}" \
   --context region="${AWS_REGION}" \
   --context domain="${DOMAIN}" \
   --context certificatearn="${CERTIFICATE_ARN}" \

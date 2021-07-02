@@ -1,16 +1,14 @@
 import cdk = require('@aws-cdk/core');
-import { readYamlDocument, loadYaml } from './utils';
-import { Database } from './database';
-import { Registry } from './registry';
-import * as eks from '@aws-cdk/aws-eks';
 import { KubernetesManifest } from '@aws-cdk/aws-eks';
 
-const version = "0.0.0";
+import { readYamlDocument, loadYaml } from './charts/utils';
+import { Database } from './database';
+import { Registry } from './registry';
+import { importCluster } from './charts/cluster-utils';
+
+const version = "aledbf-retag.6";
 
 export interface GitpodProps extends cdk.StackProps {
-    cluster: eks.ICluster
-    clusterName: string
-
     domain: string
 
     certificateArn?: string
@@ -19,11 +17,13 @@ export interface GitpodProps extends cdk.StackProps {
     registry: Registry
 }
 
-export class Gitpod extends cdk.Stack {
+export class GitpodStack extends cdk.Stack {
     constructor(scope: cdk.Construct, id: string, props: GitpodProps) {
         super(scope, id, props);
 
-        let doc = readYamlDocument(__dirname + '/assets/gitpod-values.yaml');
+        const cluster = importCluster(this, process.env.CLUSTER_NAME);
+
+        let doc = readYamlDocument(__dirname + '/charts/assets/gitpod-values.yaml');
         doc = doc.
             replace(/{{version}}/g, version).
 
@@ -41,17 +41,17 @@ export class Gitpod extends cdk.Stack {
 
             replace(/{{issuerName}}/g, 'ca-issuer');
 
-        const helmChart = props.cluster.addHelmChart('GitpodChart', {
+        const helmChart = cluster.addHelmChart('GitpodChart', {
             chart: 'gitpod',
             release: 'gitpod',
-            repository: 'https://charts.gitpod.io',
+            repository: 'https://aledbf.github.io/gitpod-chart-cleanup/',
             namespace: 'default',
-            version: '0.10.0',
+            version: '1.0.7',
             wait: true,
             values: loadYaml(doc),
         });
 
-        doc = readYamlDocument(__dirname + '/assets/ingress.yaml');
+        doc = readYamlDocument(__dirname + '/charts/assets/ingress.yaml');
         const manifest = loadYaml(doc) as any;
 
         // configure TLS termination in the load balancer
@@ -60,8 +60,8 @@ export class Gitpod extends cdk.Stack {
             manifest.metadata.annotations["alb.ingress.kubernetes.io/ssl-policy"] = "ELBSecurityPolicy-FS-1-2-Res-2020-10";
         }
 
-        const gitpodIngress = new KubernetesManifest(props.cluster.stack, "gitpod-ingress", {
-            cluster: props.cluster,
+        const gitpodIngress = new KubernetesManifest(this, "gitpod-ingress", {
+            cluster,
             overwrite: true,
             manifest: [manifest],
         });

@@ -1,18 +1,15 @@
-import * as eks from "@aws-cdk/aws-eks";
-import cdk = require('@aws-cdk/core');
 
-export interface ClusterAutoscalerProps extends cdk.StackProps {
-    cluster: eks.ICluster
-    clusterName: string
-}
+import { StackProps } from "@aws-cdk/core";
+import { importCluster } from './cluster-utils';
+import cdk = require('@aws-cdk/core');
 
 const CLUSTER_AUTOSCALER = 'cluster-autoscaler';
 
 export class ClusterAutoscaler extends cdk.Construct {
-    constructor(scope: cdk.Construct, id: string, props: ClusterAutoscalerProps) {
+    constructor(scope: cdk.Construct, id: string, props: StackProps) {
         super(scope, id);
 
-        const cluster = props.cluster;
+        const cluster = importCluster(this, process.env.CLUSTER_NAME);
 
         const helmChart = cluster.addHelmChart('ClusterAutoscalerChart', {
             chart: CLUSTER_AUTOSCALER,

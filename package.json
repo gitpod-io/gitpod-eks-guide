@@ -2,7 +2,7 @@
   "name": "gitpod",
   "version": "0.1.0",
   "bin": {
-    "addons": "bin/setup.js"
+    "addons": "bin/provision.js"
   },
   "scripts": {
     "build": "tsc",

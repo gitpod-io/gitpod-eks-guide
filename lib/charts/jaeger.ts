@@ -1,17 +1,17 @@
 import { KubernetesManifest } from '@aws-cdk/aws-eks';
 import { loadYaml, readYamlDocument } from './utils';
+import { StackProps } from '@aws-cdk/core';
+import { importCluster } from './cluster-utils';
 import cdk = require('@aws-cdk/core');
 import eks = require('@aws-cdk/aws-eks');
 
-export interface JaegerProps extends cdk.StackProps {
-    cluster: eks.ICluster;
-}
-
 export class Jaeger extends cdk.Construct {
-    constructor(scope: cdk.Construct, id: string, props: JaegerProps) {
+    constructor(scope: cdk.Construct, id: string, props: StackProps) {
         super(scope, id);
 
-        const helmChart = props.cluster.addHelmChart('jaeger-operator-chart', {
+        const cluster = importCluster(this, process.env.CLUSTER_NAME);
+
+        const helmChart = cluster.addHelmChart('jaeger-operator-chart', {
             chart: 'jaeger-operator',
             release: 'jaeger-operator',
             repository: 'https://jaegertracing.github.io/helm-charts',
@@ -43,8 +43,8 @@ export class Jaeger extends cdk.Construct {
         });
 
         const doc = readYamlDocument(__dirname + '/assets/jaeger-gitpod.yaml');
-        const gitpodJaeger = new KubernetesManifest(props.cluster.stack, "gitpod-jaeger", {
-            cluster: props.cluster,
+        const gitpodJaeger = new KubernetesManifest(cluster.stack, "gitpod-jaeger", {
+            cluster,
             overwrite: true,
             manifest: [loadYaml(doc)],
         });
