@@ -23,10 +23,11 @@ RUN curl -fsSL "https://storage.googleapis.com/kubernetes-release/release/$(curl
 
 WORKDIR /gitpod
 
-COPY . /gitpod
+COPY package.json /gitpod/
+COPY yarn.lock /gitpod/
 
-RUN yarn install
+RUN yarn --pure-lockfile --non-interactive
 
 VOLUME [ "/gitpod" ]
 
-CMD ["/bin/bash", "-c", "set -x /gitpod/setup.sh eks-cluster.yaml $DOMAIN $CERTIFICATE_ARN"]
+CMD ["/bin/bash", "-c", "/gitpod/setup.sh eks-cluster.yaml $DOMAIN $CERTIFICATE_ARN"]
