@@ -1,5 +1,5 @@
 {
-  "name": "gitpod",
+  "name": "gitpod-eks-guide",
   "version": "0.1.0",
   "bin": {
     "addons": "bin/provision.js"
@@ -8,27 +8,26 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk",
-    "prepare": "husky install"
+    "cdk": "cdk"
   },
   "devDependencies": {
-    "@aws-cdk/assert": "^1.109.0",
+    "@aws-cdk/assert": "^1.111.0",
     "@types/jest": "^26.0.10",
     "@types/js-yaml": "^4.0.1",
-    "@types/node": "^15.12.2",
+    "@types/node": "^15.14.0",
     "@types/uuid": "^8.3.0",
-    "husky": "^6.0.0",
+    "husky": "^7.0.0",
     "jest": "^26.4.2",
     "ts-jest": "^26.2.0",
     "ts-node": "^10.0.0",
-    "typescript": "^4.3.3"
+    "typescript": "^4.3.5"
   },
   "dependencies": {
-    "@aws-cdk/aws-eks": "^1.110.1",
-    "@aws-cdk/aws-iam": "^1.110.1",
-    "@aws-cdk/aws-rds": "^1.110.1",
-    "@aws-cdk/aws-secretsmanager": "^1.110.1",
-    "@aws-cdk/core": "^1.110.1",
+    "@aws-cdk/aws-eks": "^1.111.0",
+    "@aws-cdk/aws-iam": "^1.111.0",
+    "@aws-cdk/aws-rds": "^1.111.0",
+    "@aws-cdk/aws-secretsmanager": "^1.111.0",
+    "@aws-cdk/core": "^1.111.0",
     "@aws-sdk/client-secrets-manager": "^3.19.0",
     "js-yaml": "^4.1.0",
     "source-map-support": "^0.5.16",
