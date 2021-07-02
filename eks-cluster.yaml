@@ -102,6 +102,12 @@ nodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
+      # required in image-builder
+      cat <<EOF | tee /etc/modules-load.d/containerd.conf
+      br_netfilter
+      EOF
+      modprobe br_netfilter
+
       export AMI=ami-058176df7676cc2db
       export CLUSTERNAME=gitpod
       export NODEGROUP=workspaces
@@ -118,6 +124,7 @@ nodeGroups:
 
       /etc/eks/bootstrap.sh ${CLUSTERNAME} $(printf -- "--kubelet-extra-args '--node-labels=%s'" $(IFS=$','; echo "${LABELS[*]}"))
 
+    # Spot instances documentation https://eksctl.io/usage/spot-instances/
     instancesDistribution:
       instanceTypes: ["m5.large","m5.xlarge"]
       maxPrice: 0.1
@@ -126,8 +133,6 @@ nodeGroups:
       spotInstancePools: 1
 
   - name: services
-    # disabled when using spot instances
-    #instanceType: m5.large
     desiredCapacity: 1
     minSize: 1
     maxSize: 3
@@ -158,6 +163,12 @@ nodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
+      # required in image-builder
+      cat <<EOF | tee /etc/modules-load.d/containerd.conf
+      br_netfilter
+      EOF
+      modprobe br_netfilter
+
       export AMI=ami-058176df7676cc2db
       export CLUSTERNAME=gitpod
       export NODEGROUP=services
@@ -174,10 +185,12 @@ nodeGroups:
 
       /etc/eks/bootstrap.sh ${CLUSTERNAME} $(printf -- "--kubelet-extra-args '--node-labels=%s'" $(IFS=$','; echo "${LABELS[*]}"))
 
-    # Use spot instances
+    # disabled when using spot instances
+    # instanceType: m5.xlarge
+    # Spot instances documentation https://eksctl.io/usage/spot-instances/
     instancesDistribution:
       maxPrice: 0.1
-      instanceTypes: ["m5.large","m5.xlarge"]
+      instanceTypes: ["m5.xlarge","m5.2xlarge"]
       onDemandBaseCapacity: 0
       onDemandPercentageAboveBaseCapacity: 0
       spotInstancePools: 1
