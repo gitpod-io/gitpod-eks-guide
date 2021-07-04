@@ -14,10 +14,11 @@ metadata:
           "StatusCode": "HTTP_301"
         }
       }
+    alb.ingress.kubernetes.io/tags: Purpose=Gitpod Service=proxy
     alb.ingress.kubernetes.io/healthcheck-protocol: HTTPS
     alb.ingress.kubernetes.io/backend-protocol: HTTPS
     alb.ingress.kubernetes.io/scheme: internet-facing
-    #alb.ingress.kubernetes.io/backend-protocol-version: HTTP2
+    alb.ingress.kubernetes.io/backend-protocol-version: HTTP2
     alb.ingress.kubernetes.io/listen-ports: >-
       [{
         "HTTP": 80
