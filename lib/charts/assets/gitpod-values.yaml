@@ -1,0 +1,343 @@
+hostname: "{{domain}}"
+
+imagePrefix: eu.gcr.io/gitpod-core-dev/build/
+version: "{{version}}"
+
+installation:
+  region: "{{region}}"
+
+certificatesSecret:
+  secretName: proxy-config-certificates
+
+installPodSecurityPolicies: true
+imagePullPolicy: Always
+
+resources:
+  default:
+    cpu: 1m
+    memory: 256Mi
+
+workspaceSizing:
+  requests:
+    cpu: 1m
+    memory: 1.75Gi
+    storage: ""
+  limits:
+    cpu: "6"
+    memory: 12Gi
+  dynamic:
+    cpu:
+      buckets:
+        - budget: 144000
+          limit: 600
+        - budget: 144000
+          limit: 400
+        - budget: 54000
+          limit: 200
+      controlPeriod: 15m
+      samplingPeriod: 10s
+
+# TODO: test CPU burn to trigger issues with systemd
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: purpose
+          operator: In
+          values:
+          - services
+
+db:
+  host: "{{mysqlHostname}}"
+  port: "{{mysqlPort}}"
+  password: "{{mysqlPassword}}"
+  autoMigrate: true
+
+# disable local mysql
+mysql:
+  enabled: false
+# do not install minio but configure AWS credentials
+minio:
+  enabled: false
+  accessKey: "{{accessKey}}"
+  secretKey: "{{secretKey}}"
+
+# configure docker-registry to use S3
+docker-registry:
+  replicas: 3
+  enabled: true
+  fullnameOverride: registry
+  # Enable TLS
+  service:
+    port: 443
+  tlsSecretName: "builtin-registry-certs"
+  s3:
+    region: "{{region}}"
+    bucket: "{{storageBucketName}}"
+    encrypt: true
+    secure: true
+  storage: s3
+  secrets:
+    s3:
+      accessKey: "{{accessKey}}"
+      secretKey: "{{secretKey}}"
+  configData:
+    version: 0.1
+    log:
+      accesslog:
+        disabled: true
+      level: info
+      formatter: json
+    storage:
+      s3:
+        multipartcopymaxconcurrency: 500
+      cache:
+        blobdescriptor: inmemory
+      maintenance:
+        uploadpurging:
+          enabled: true
+          age: 168h
+          interval: 24h
+          dryrun: false
+    http:
+      addr: :5000
+      debug:
+        addr: :5001
+        prometheus:
+            enabled: true
+            path: /metrics
+      secret: phirDEX1torsyumiwnnuh6PRAU4hern
+      tls:
+        certificate: /etc/ssl/docker/tls.crt
+        key: /etc/ssl/docker/tls.key
+        minimumtls: tls1.2
+        ciphersuites:
+          - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+          - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+      headers:
+        X-Content-Type-Options: [nosniff]
+    health:
+      storagedriver:
+        enabled: true
+        interval: 10s
+        threshold: 3
+
+rabbitmq:
+  readinessProbe:
+    enabled: false
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: purpose
+            operator: In
+            values:
+            - services
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: rabbitmq
+          topologyKey: kubernetes.io/hostname
+        weight: 1
+  replicas: 2
+  auth:
+    username: "gitpod"
+    password: "4B6e7m2QjpCgrz9DQT"
+
+defaults:
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+
+tracing:
+  endoint: http://jaeger-collector:14268/api/traces
+  samplerType: const
+  samplerParam: "1"
+
+# TODO: empty array means no login.
+authProviders: []
+
+workspaceScheduler: default-scheduler
+
+components:
+  agentSmith:
+    disabled: true
+
+  dbMigrations:
+    enabled: false
+
+  imageBuilder:
+    dindImage: docker:20.10.7-dind-rootless
+    hostDindData: "/mnt/image-builder"
+    registry:
+      secretName: builtin-registry-auth
+      bypassProxy: true
+    dindResources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+  registryFacade:
+    hostname: "{{hostname}}"
+    daemonSet: true
+
+  server:
+    defaultFeatureFlags: [] # ["full_workspace_backup"]
+    imageName: server
+    replicas: 1
+    github:
+      app: {}
+    enableLocalApp: false
+    enableOAuthServer: true
+    blockNewUsers: true
+    blockNewUsersPasslist:
+    - gitpod.io
+    makeNewUsersAdmin: true
+    sessionMaxAgeMs: "28800000"   # 8 hours
+    defaultBaseImageRegistryWhitelist:
+    - "https://index.docker.io/v1/"
+    incrementalPrebuilds:
+      commitHistory: 100
+      repositoryPasslist: []
+    wsman: []
+    serverContainer:
+      env:
+      - name: ENABLE_PAYMENT
+        value: "false"
+
+  workspace:
+    affinity:
+      default: workspaces
+    supervisor:
+      imageName: supervisor
+    templates:
+      default:
+        spec:
+          dnsConfig:
+            nameservers:
+            - 1.1.1.1
+            - 8.8.8.8
+          dnsPolicy: None   # do NOT query against K8s DNS (https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
+          env:
+          - name: THEIA_PREVENT_METADATA_ACCESS
+            value: true
+      regular:
+        spec:
+          containers:
+          - name: workspace
+            env:
+            - name: THEIA_RATELIMIT_LOG
+              value: "50"
+      prebuild:
+        spec:
+          containers:
+          - name: workspace
+            # Intended to reduce the density for prebuilds
+            resources:
+              limits:
+                cpu: "5"
+                memory: 12Gi
+              requests:
+                cpu: 1m
+                ephemeral-storage: 5Gi
+                memory: 4608Mi  # = 2 * 2304Mi
+
+  proxy:
+    replicas: 4
+    ports:
+      http:
+        expose: true
+        containerPort: 80
+      https:
+        expose: true
+        containerPort: 443
+    certManager:
+      issuerName: "{{issuerName}}"
+    serviceExternalTrafficPolicy: Local
+    serviceType: NodePort
+
+  wsManagerBridge:
+    defaultConfig: true
+
+  wsDaemon:
+    hostWorkspaceArea: /mnt/workspaces
+    userNamespaces:
+      fsShift: fuse
+      shiftfsModuleLoader:
+        enabled: false
+    containerRuntime:
+      enabled: true
+      nodeRoots:
+      - /var/lib
+      - /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
+
+  contentService:
+    name: content-service
+    disabled: false
+    resources:
+      cpu: 100m
+      memory: 32Mi
+    ports:
+      rpc:
+        expose: true
+        containerPort: 8080
+      metrics:
+        expose: false
+        containerPort: 9500
+    remoteStorage:
+      blobQuota: 1073741824 # 1 GiB
+      kind: minio
+      backupTrail:
+        enabled: true
+        maxLength: 2
+      minio:
+        endpoint: s3.amazonaws.com
+        region: "{{region}}"
+        secure: true
+        parallelUpload: 100
+
+  wsScheduler:
+    name: ws-scheduler
+    disabled: true
+    scalerDisabled: true
+
+  wsProxy:
+    name: ws-proxy
+    disabled: false
+    replicas: 4
+    hostHeader: x-wsproxy-host
+    ports:
+      metrics:
+        expose: false
+        containerPort: 60095
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: purpose
+              operator: In
+              values:
+              - services
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - ws-proxy
+            topologyKey: services
+          weight: 100
+
+# configure default log level
+log:
+  level: info
+
+cert-manager:
+  enabled: true
+  install: false
