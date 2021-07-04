@@ -29,7 +29,7 @@ fi
 
 # Create EKS cluster without nodes
 # Generate a new kubeconfig file in the local directory
-KUBECONFIG=.kubeconfig
+export KUBECONFIG=.kubeconfig
 
 if ! eksctl get cluster "${CLUSTER_NAME}"; then
   eksctl create cluster --config-file "${EKSCTL_CONFIG}" --without-nodegroup --kubeconfig ${KUBECONFIG}
@@ -55,8 +55,6 @@ spec:
         encapsulation: VXLANCrossSubnet
         natOutgoing: Enabled
         nodeSelector: all()
-    # BPF has no support for hostPorts
-    # hostPorts: null
     linuxDataplane: Iptables
   cni:
     type: Calico
@@ -111,10 +109,6 @@ eksctl create nodegroup --config-file="${EKSCTL_CONFIG}"
 # Restart tigera-operator
 kubectl delete pod -n tigera-operator -l k8s-app=tigera-operator
 
-# Disable kube-proxy (deletion is also an option)
-# TODO: enable when calico supports hostPorts when eBPF mode is enabled
-kubectl patch ds -n kube-system kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
-
 # Create RDS database, S3 bucket for docker-registry and IAM account for gitpod S3 storage
 # the cdk application will generates a gitpod-values.yaml file to be used by helm
 
@@ -128,7 +122,7 @@ aws ssm put-parameter \
   --value "$(date +%s | sha256sum | base64 | head -c 35 ; echo)" \
   --region "${AWS_REGION}"
 
-cdk destroy \
+cdk deploy \
   --context region="${AWS_REGION}" \
   --context domain="${DOMAIN}" \
   --context certificatearn="${CERTIFICATE_ARN}" \
