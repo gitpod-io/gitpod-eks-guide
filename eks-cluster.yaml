@@ -60,7 +60,7 @@ nodeGroups:
     volumeSize: 50
     volumeType: gp3
     privateNetworking: true
-    ami: ami-058176df7676cc2db
+    ami: ami-06a34231ddd849ae5
     amiFamily: Ubuntu2004
     asgMetricsCollection: &asgMetricsCollection
       - granularity: 1Minute
@@ -102,13 +102,7 @@ nodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
-      # required in image-builder
-      cat <<EOF | tee /etc/modules-load.d/containerd.conf
-      br_netfilter
-      EOF
-      modprobe br_netfilter
-
-      export AMI=ami-058176df7676cc2db
+      export AMI=ami-06a34231ddd849ae5
       export CLUSTERNAME=gitpod
       export NODEGROUP=workspaces
 
@@ -141,7 +135,7 @@ nodeGroups:
     volumeSize: 50
     volumeType: gp3
     privateNetworking: true
-    ami: ami-058176df7676cc2db
+    ami: ami-06a34231ddd849ae5
     amiFamily: Ubuntu2004
     asgMetricsCollection: *asgMetricsCollection
     ebsOptimized: true
@@ -163,13 +157,7 @@ nodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
-      # required in image-builder
-      cat <<EOF | tee /etc/modules-load.d/containerd.conf
-      br_netfilter
-      EOF
-      modprobe br_netfilter
-
-      export AMI=ami-058176df7676cc2db
+      export AMI=ami-06a34231ddd849ae5
       export CLUSTERNAME=gitpod
       export NODEGROUP=services
 
