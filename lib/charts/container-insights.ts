@@ -1,7 +1,11 @@
 import * as cdk from "@aws-cdk/core";
 import * as eks from "@aws-cdk/aws-eks";
 import * as iam from '@aws-cdk/aws-iam';
+import { LogGroup, RetentionDays, ILogGroup } from '@aws-cdk/aws-logs';
 import { importCluster } from './cluster-utils';
+import { RemovalPolicy } from '@aws-cdk/core';
+import { ServiceAccount } from "@aws-cdk/aws-eks";
+import { ManagedPolicy } from '@aws-cdk/aws-iam';
 
 export class ContainerInsights extends cdk.Construct {
     constructor(scope: cdk.Construct, id: string, props: cdk.StackProps) {
@@ -31,20 +35,27 @@ export class ContainerInsights extends cdk.Construct {
                     create: false,
                     name: serviceAccount.serviceAccountName,
                 },
-                cloudWatch: {
-                    region: cluster.stack.region,
-                },
-                firehose: {
-                    enabled: false
-                },
-                kinesis: {
-                    enabled: false
-                },
-                elasticsearch: {
-                    enabled: false
-                }
+                cloudWatch: this.parseCloudWatchOptions(`${process.env.AWS_REGION}`, serviceAccount),
             }
         });
         helmChart.node.addDependency(serviceAccount);
+    }
+
+    private parseCloudWatchOptions(region: string, serviceAccount: ServiceAccount): Record<string, unknown> {
+        const logGroup = new LogGroup(this, 'AwsForFluentBitAddonDefaultLogGroup', {
+            logGroupName: `/aws/eks/fluentbit/${process.env.CLUSTER_NAME}`,
+            removalPolicy: RemovalPolicy.DESTROY,
+            retention: RetentionDays.ONE_MONTH,
+        });
+
+        serviceAccount.role.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy'));
+
+        return {
+            enabled: true,
+            region,
+            logGroupName: logGroup.logGroupName,
+            match: '*',
+            autoCreateGroup: false,
+        };
     }
 }
