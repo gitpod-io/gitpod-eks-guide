@@ -14,3 +14,5 @@ package-lock.json
 gitpod-values.yaml
 gitpod-ingress.yaml
 .env
+
+.kubeconfig*

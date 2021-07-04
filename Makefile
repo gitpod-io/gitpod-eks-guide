@@ -9,7 +9,7 @@ build: ## Build docker image containing the required tools to install gitpod in 
 	@docker build . -t ${IMG}
 
 run: build ## Start new gitpod installation
-	docker run -it \
+	@docker run -it \
 		--env-file ${PWD}/.env \
 		--volume ${PWD}:/gitpod \
 		--volume ${HOME}/.aws/credentials:/root/.aws/credentials \
