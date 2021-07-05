@@ -192,6 +192,7 @@ components:
       app: {}
     enableLocalApp: false
     enableOAuthServer: true
+    # TODO: allow custom values
     blockNewUsers: true
     blockNewUsersPasslist:
     - gitpod.io

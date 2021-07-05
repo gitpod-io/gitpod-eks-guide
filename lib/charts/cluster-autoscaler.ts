@@ -27,6 +27,16 @@ export class ClusterAutoscaler extends cdk.Construct {
                     create: false,
                     name: CLUSTER_AUTOSCALER,
                 },
+                extraArgs: {
+                    'stderrthreshold': 'info',
+                    'v': 2,
+                    'skip-nodes-with-local-storage': false,
+                    // scale-down-utilization-threshold: 0.5
+                    // scale-down-non-empty-candidates-count: 30
+                    // max-node-provision-time: 15m0s
+                    // scale-down-unneeded-time: 30m
+                    // skip-nodes-with-system-pods: true
+                }
             },
         });
     }

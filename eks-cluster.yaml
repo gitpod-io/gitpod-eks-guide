@@ -50,8 +50,6 @@ privateCluster:
 
 nodeGroups:
   - name: workspaces
-    # disabled when using spot instances
-    #instanceType: m5.large
     desiredCapacity: 1
     minSize: 1
     maxSize: 3
@@ -99,6 +97,8 @@ nodeGroups:
         cloudWatch: true
         certManager: true
         ebs: true
+    # Using custom AMI images require the definition of overrideBootstrapCommand
+    # to ensure that nodes are able to join the cluster https://eksctl.io/usage/custom-ami-support/
     overrideBootstrapCommand: |
       #!/bin/bash
 
@@ -116,11 +116,13 @@ nodeGroups:
         purpose="${NODEGROUP}"
       )
 
-      /etc/eks/bootstrap.sh ${CLUSTERNAME} $(printf -- "--kubelet-extra-args '--node-labels=%s'" $(IFS=$','; echo "${LABELS[*]}"))
+      /etc/eks/bootstrap.sh ${CLUSTERNAME} --use-max-pods=false $(printf -- "--kubelet-extra-args '--max-pods=110 --node-labels=%s'" $(IFS=$','; echo "${LABELS[*]}"))
 
+    # disabled when using spot instances
+    #instanceType: m5.large
     # Spot instances documentation https://eksctl.io/usage/spot-instances/
     instancesDistribution:
-      instanceTypes: ["m5.large","m5.xlarge"]
+      instanceTypes: ["m5.xlarge","m5.2xlarge"]
       maxPrice: 0.1
       onDemandBaseCapacity: 0
       onDemandPercentageAboveBaseCapacity: 0
@@ -154,6 +156,8 @@ nodeGroups:
     iam:
       attachPolicyARNs: *attachPolicyARNs
       withAddonPolicies: *withAddonPolicies
+    # Using custom AMI images require the definition of overrideBootstrapCommand
+    # to ensure that nodes are able to join the cluster https://eksctl.io/usage/custom-ami-support/
     overrideBootstrapCommand: |
       #!/bin/bash
 
@@ -171,7 +175,7 @@ nodeGroups:
         purpose="${NODEGROUP}"
       )
 
-      /etc/eks/bootstrap.sh ${CLUSTERNAME} $(printf -- "--kubelet-extra-args '--node-labels=%s'" $(IFS=$','; echo "${LABELS[*]}"))
+      /etc/eks/bootstrap.sh ${CLUSTERNAME} --use-max-pods=false $(printf -- "--kubelet-extra-args '--max-pods=110 --node-labels=%s'" $(IFS=$','; echo "${LABELS[*]}"))
 
     # disabled when using spot instances
     # instanceType: m5.xlarge

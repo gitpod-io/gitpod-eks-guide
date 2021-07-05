@@ -11,10 +11,9 @@ export function importCluster(scope: cdk.Construct, clusterName: string | undefi
     const openIdConnectProvider = iam.OpenIdConnectProvider.fromOpenIdConnectProviderArn(
         scope, "OpenIdConnectProvider", oidcProviderArn);
 
-    const kubectlRoleArn = process.env.KUBECTL_ROLE_ARN;
     return eks.Cluster.fromClusterAttributes(scope, "BaseCluster", {
         clusterName,
         openIdConnectProvider,
-        kubectlRoleArn
+        kubectlRoleArn: process.env.KUBECTL_ROLE_ARN
     });
 }

@@ -2,15 +2,12 @@
 
 set -euo pipefail
 
-if [ "$#" -ne 3 ]; then
+if [ "$#" -ne 1 ]; then
     echo "Invalid number of parameters. Expected <path eksctl configuration>"
     exit 1
 fi
 
 EKSCTL_CONFIG=$1
-DOMAIN=$2
-CERTIFICATE_ARN=$3
-
 if [ ! -f "${EKSCTL_CONFIG}" ]; then
     echo "Configuration file ${EKSCTL_CONFIG} does not exist."
     exit 1
@@ -31,7 +28,7 @@ fi
 # Generate a new kubeconfig file in the local directory
 export KUBECONFIG=.kubeconfig
 
-if ! eksctl get cluster "${CLUSTER_NAME}"; then
+if ! eksctl get cluster "${CLUSTER_NAME}" > /dev/null 2>&1; then
   eksctl create cluster --config-file "${EKSCTL_CONFIG}" --without-nodegroup --kubeconfig ${KUBECONFIG}
 fi
 
@@ -63,7 +60,7 @@ spec:
 EOF
 
 # Setup Calico
-kubectl create namespace calico-system || true
+kubectl create namespace calico-system > /dev/null 2>&1 || true
 kubectl apply -f - <<EOF
 kind: ConfigMap
 apiVersion: v1
@@ -79,7 +76,6 @@ EOF
 KUBECTL_ROLE_ARN=$(aws iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
 if [ $? -eq 1 ]; then
   echo "Creating Role for EKS access"
-
   # Create IAM role and mapping to Kubernetes user and groups.
   ACCOUNT_ID=$(aws sts get-caller-identity | jq -r .Account)
   POLICY=$(echo -n '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::'; echo -n "$ACCOUNT_ID"; echo -n ':root"},"Action":"sts:AssumeRole","Condition":{}}]}')
@@ -90,8 +86,6 @@ if [ $? -eq 1 ]; then
     --output text \
     --query 'Role.Arn')
 fi
-
-export KUBECTL_ROLE_ARN
 
 # check if the identity mapping already exists
 if ! eksctl get iamidentitymapping --cluster "${CLUSTER_NAME}" --arn "${KUBECTL_ROLE_ARN}"; then
@@ -122,7 +116,11 @@ aws ssm put-parameter \
   --value "$(date +%s | sha256sum | base64 | head -c 35 ; echo)" \
   --region "${AWS_REGION}"
 
+export CLUSTER_NAME
+export KUBECTL_ROLE_ARN
+
 cdk deploy \
+  --context clusterName="${CLUSTER_NAME}" \
   --context region="${AWS_REGION}" \
   --context domain="${DOMAIN}" \
   --context certificatearn="${CERTIFICATE_ARN}" \
@@ -133,7 +131,7 @@ cdk deploy \
 # wait for update of the ingress status
 sleep 5
 ALB_URL=$(kubectl get ingress gitpod -o json | jq -r .status.loadBalancer.ingress[0].hostname)
-if [ -z "${ALB_URL}" ];then
+if [ -n "${ALB_URL}" ];then
   echo "Load balancer hostname: ${ALB_URL}"
 fi
 

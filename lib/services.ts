@@ -15,6 +15,7 @@ export class ServicesStack extends cdk.Stack {
         // search VPC created by eksctl
         const vpc = ec2.Vpc.fromLookup(this, 'vpc', {
             vpcName: `eksctl-${process.env.CLUSTER_NAME}-cluster/VPC`,
+            isDefault: false
         });
 
         // create RDS database for gitpod
@@ -24,6 +25,7 @@ export class ServicesStack extends cdk.Stack {
             vpc,
             username: 'gitpod'
         })
+        this.database.node.addDependency(vpc);
 
         // create permissions to access S3 buckets
         this.registry = new Registry(this, 'Registry', {

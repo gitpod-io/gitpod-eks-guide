@@ -15,6 +15,7 @@ export class SetupStack extends cdk.Stack {
         // search VPC created by eksctl (validation purposes)
         ec2.Vpc.fromLookup(this, 'vpc', {
             vpcName: `eksctl-${process.env.CLUSTER_NAME}-cluster/VPC`,
+            isDefault: false
         });
 
         // Extract the ID of the EKS cluster from the identityoidcissuer URL

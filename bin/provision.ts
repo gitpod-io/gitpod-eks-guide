@@ -32,7 +32,7 @@ if (!certificateArn) {
 
 const env = {
   account: process.env.CDK_DEPLOY_ACCOUNT || process.env.CDK_DEFAULT_ACCOUNT,
-  region
+  region,
 };
 
 const setup = new SetupStack(app, 'Setup', {
