@@ -7,42 +7,42 @@ We provide two options to provision and install gitpod:
 - Using a docker image
 - Using a local script (requires the installation of dependencies)
 
-### Using a docker image
+For both options you need:
 
-The only requirement is [docker](https://docs.docker.com/engine/install/) and two configuration files:
+An AWS account with Administrator access: [create one now by clicking here](https://aws.amazon.com/getting-started/)
 
+- A SSL Certificate created with [AWS Certificate Manager](https://aws.amazon.com/es/certificate-manager/)
 - .env file with basic details about the environment. We provide an example of such file [here .env.example](.env.example)
 - AWS credentials file. By default, such file is present in `$HOME/.aws/credentials`.
-- [eksctl](https://github.com/weaveworks/eksctl) configuration file describing the cluster we want to create. [Here eks-cluster.yaml](eks-cluster.yaml) you can find an example.
+- [eksctl](https://eksctl.io/) configuration file describing the cluster. [Here eks-cluster.yaml](eks-cluster.yaml) you can find an example.
 
-*Please adapt the configurations to the needs of your environment.*
 
+### Using a docker image
+
+The requirements to install the cluster is [docker](https://docs.docker.com/engine/install/) and the configuration files previously mentioned.
 
 **To start the installation run:**
 
 ```shell
-# builds a docker image
-make build
-
 make run
 ```
 
-The hole process takes forty minutes. At the end it provisions:
+The whole process takes around forty minutes. In the end, the following resources are created:
 
-- an EKS cluster running Kubernetes v1.20.4
-- custom [AMI image](https://github.com/aledbf/amazon-eks-custom-amis/tree/gitpod):
+- an EKS cluster running Kubernetes v1.20
+- Kubernetes nodes using a custom [AMI image](https://github.com/aledbf/amazon-eks-custom-amis/tree/gitpod):
     - Ubuntu 20.04
     - Linux kernel 5.13
     - containerd 1.52
     - runc 1.0.0
-    -
-- two autoscaling groups, one for gitpod components and another for workspaces
-- Local docker registry using S3 as storage backend
+
 - ALB load balancer with TLS termination and re-encryption
 - RDS Mysql database
+- Two autoscaling groups, one for gitpod components and another for workspaces
+- In-cluster docker registry using S3 as storage backend
 - IAM account with S3 access (docker-registry and gitpod user content)
-- [calico](https://docs.projectcalico.org) as CNI and network policy provider
-- [cert-manager](https://cert-manager.io/) for seld-signed SSL certificates
+- [calico](https://docs.projectcalico.org) as CNI and NetworkPolicy implementation
+- [cert-manager](https://cert-manager.io/) for self-signed SSL certificates
 - [cluster-autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
 - [Jaeger operator](https://github.com/jaegertracing/helm-charts/tree/main/charts/jaeger-operator) - and Jaeger deployment for gitpod distributed tracing
 - [metrics-server](https://github.com/kubernetes-sigs/metrics-server)
@@ -61,17 +61,17 @@ eksctl version
 ```
 *be sure to install v0.54.0 or above*
 
-Run the script `setup.sh <eksctl configuration> <domain> <AWS certificate ARN>` passing as argument the path to the [eksctl](https://github.com/weaveworks/eksctl) configuration file.
+Run the script `setup.sh <eksctl configuration>` passing as argument the path to the [eksctl](https://github.com/weaveworks/eksctl) configuration file.
 
-We provide an example of such configuration file as an example. The cluster
+We provide an example of such a configuration file as an example. The cluster
 
 *Please adapt the configuration to the needs of your environment.*
 
 ```shell
-setup.sh <eksctl configuration> <domain> <AWS certificate ARN>
+setup.sh <eksctl configuration>
 ```
 
-## Verify install
+## Verify the installation
 
 TODO:
 
@@ -81,10 +81,17 @@ TODO:
 
 ----
 
-TODO: remove
+## Destroy the cluster and AWS resources
 
-**Create gitpod-sessions database**
+Remove Cloudformation stacks created by CDK running:
 
 ```shell
-kubectl run -it --rm --image=mysql:5.7 --restart=Never mysql-client -- mysql -h <hostname> -p<password> -u gitpod
+cdk destroy --all
+cdk context --clear
+```
+
+Delete the EKS cluster and all the resources
+
+```shell
+eksctl delete cluster <cluster name>
 ```
