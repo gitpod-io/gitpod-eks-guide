@@ -1,7 +1,9 @@
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
+  # Template, please change
   name: gitpod
+  # Template, please change
   region: us-west-2
   version: "1.20"
 
@@ -31,6 +33,9 @@ availabilityZones:
   - us-west-2c
   - us-west-2d
 
+# By default we create a dedicated VPC for the cluster
+# You can use an existing VPC by supplying private and/or public subnets. Please check
+# https://eksctl.io/usage/vpc-networking/#use-existing-vpc-other-custom-configuration
 vpc:
   autoAllocateIPv6: false
   nat:
@@ -38,6 +43,8 @@ vpc:
     # https://eksctl.io/usage/vpc-networking/#nat-gateway
     gateway: Single
 
+# Enable EKS control plane logging
+# https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html
 cloudWatch:
   clusterLogging:
     enableTypes: ["audit", "authenticator"]
@@ -55,10 +62,15 @@ nodeGroups:
     maxSize: 3
     # because of AWS addons
     disableIMDSv1: false
+    # Please configure the size of the volume and additional features
+    # https://eksctl.io/usage/schema/#nodeGroups-volumeType
+    # https://aws.amazon.com/es/ebs/pricing/
     volumeSize: 50
     volumeType: gp3
+    # Use private subnets for nodes
+    # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-02fcb782cbf574e5f
+    ami: ami-0fbf45b5f19d2d33d
     amiFamily: Ubuntu2004
     asgMetricsCollection: &asgMetricsCollection
       - granularity: 1Minute
@@ -102,7 +114,7 @@ nodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
-      export AMI=ami-02fcb782cbf574e5f
+      export AMI=ami-0fbf45b5f19d2d33d
       export CLUSTERNAME=gitpod
       export NODEGROUP=workspaces
 
@@ -134,10 +146,15 @@ nodeGroups:
     maxSize: 3
     # because of AWS addons
     disableIMDSv1: false
+    # Please configure the size of the volume and additional features
+    # https://eksctl.io/usage/schema/#nodeGroups-volumeType
+    # https://aws.amazon.com/es/ebs/pricing/
     volumeSize: 50
     volumeType: gp3
+    # Use private subnets for nodes
+    # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-02fcb782cbf574e5f
+    ami: ami-0fbf45b5f19d2d33d
     amiFamily: Ubuntu2004
     asgMetricsCollection: *asgMetricsCollection
     ebsOptimized: true
@@ -161,7 +178,7 @@ nodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
-      export AMI=ami-02fcb782cbf574e5f
+      export AMI=ami-0fbf45b5f19d2d33d
       export CLUSTERNAME=gitpod
       export NODEGROUP=services
 

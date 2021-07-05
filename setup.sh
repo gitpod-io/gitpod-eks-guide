@@ -29,12 +29,15 @@ fi
 export KUBECONFIG=.kubeconfig
 
 if ! eksctl get cluster "${CLUSTER_NAME}" > /dev/null 2>&1; then
+  # https://eksctl.io/usage/managing-nodegroups/
   eksctl create cluster --config-file "${EKSCTL_CONFIG}" --without-nodegroup --kubeconfig ${KUBECONFIG}
 fi
 
 # Disable default AWS CNI provider.
+# The reason for this change is related to the number of containers we can have in ec2 instances
+# https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt
+# https://docs.aws.amazon.com/eks/latest/userguide/pod-networking.html
 kubectl patch ds -n kube-system aws-node -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
-
 # Install Calico opetator.
 kubectl apply -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
 
@@ -88,6 +91,7 @@ if [ $? -eq 1 ]; then
 fi
 
 # check if the identity mapping already exists
+# Manage IAM users and roles https://eksctl.io/usage/iam-identity-mappings/
 if ! eksctl get iamidentitymapping --cluster "${CLUSTER_NAME}" --arn "${KUBECTL_ROLE_ARN}" > /dev/null 2>&1; then
   echo "Creating mapping from IAM role ${KUBECTL_ROLE_ARN}"
   eksctl create iamidentitymapping \
@@ -119,6 +123,7 @@ aws ssm put-parameter \
 export CLUSTER_NAME
 export KUBECTL_ROLE_ARN
 
+# deploy CDK stacks
 cdk deploy \
   --context clusterName="${CLUSTER_NAME}" \
   --context region="${AWS_REGION}" \
