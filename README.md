@@ -73,13 +73,29 @@ setup.sh <eksctl configuration>
 
 ## Verify the installation
 
-TODO:
+### Test gitpod workspace
 
-## Test gitpod workspace
+When the provisioning and configuration of the cluster is done, the script shows the URL of the load balancer,
+like:
 
-TODO:
+```shell
+Load balancer hostname: k8s-default-gitpod-.......elb.amazonaws.com
+```
+
+This is the value of the `CNAME` field that needs to be configured in the DNS domain, for the record `<domain>` and `*.<domain>`
+
+After this two records are configured, please open the URL `<domain>/workspaces`. It should display the gitpod login page similar to
+
 
 ----
+
+## Update gitpod auth providers
+
+```shell
+kubectl edit configmap auth-providers-config
+```
+
+TODO
 
 ## Destroy the cluster and AWS resources
 
