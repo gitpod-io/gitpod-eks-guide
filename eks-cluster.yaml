@@ -58,7 +58,7 @@ nodeGroups:
     volumeSize: 50
     volumeType: gp3
     privateNetworking: true
-    ami: ami-06a34231ddd849ae5
+    ami: ami-02fcb782cbf574e5f
     amiFamily: Ubuntu2004
     asgMetricsCollection: &asgMetricsCollection
       - granularity: 1Minute
@@ -102,7 +102,7 @@ nodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
-      export AMI=ami-06a34231ddd849ae5
+      export AMI=ami-02fcb782cbf574e5f
       export CLUSTERNAME=gitpod
       export NODEGROUP=workspaces
 
@@ -137,7 +137,7 @@ nodeGroups:
     volumeSize: 50
     volumeType: gp3
     privateNetworking: true
-    ami: ami-06a34231ddd849ae5
+    ami: ami-02fcb782cbf574e5f
     amiFamily: Ubuntu2004
     asgMetricsCollection: *asgMetricsCollection
     ebsOptimized: true
@@ -161,7 +161,7 @@ nodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
-      export AMI=ami-06a34231ddd849ae5
+      export AMI=ami-02fcb782cbf574e5f
       export CLUSTERNAME=gitpod
       export NODEGROUP=services
 
