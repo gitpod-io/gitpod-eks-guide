@@ -257,7 +257,7 @@ components:
         containerPort: 443
     certManager:
       issuerName: "{{issuerName}}"
-    serviceExternalTrafficPolicy: Local
+    serviceExternalTrafficPolicy: Cluster
     serviceType: NodePort
 
   wsManagerBridge:
