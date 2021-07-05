@@ -88,7 +88,7 @@ if [ $? -eq 1 ]; then
 fi
 
 # check if the identity mapping already exists
-if ! eksctl get iamidentitymapping --cluster "${CLUSTER_NAME}" --arn "${KUBECTL_ROLE_ARN}"; then
+if ! eksctl get iamidentitymapping --cluster "${CLUSTER_NAME}" --arn "${KUBECTL_ROLE_ARN}" > /dev/null 2>&1; then
   echo "Creating mapping from IAM role ${KUBECTL_ROLE_ARN}"
   eksctl create iamidentitymapping \
     --cluster "${CLUSTER_NAME}" \
@@ -101,7 +101,7 @@ fi
 eksctl create nodegroup --config-file="${EKSCTL_CONFIG}"
 
 # Restart tigera-operator
-kubectl delete pod -n tigera-operator -l k8s-app=tigera-operator
+kubectl delete pod -n tigera-operator -l k8s-app=tigera-operator > /dev/null 2>&1
 
 # Create RDS database, S3 bucket for docker-registry and IAM account for gitpod S3 storage
 # the cdk application will generates a gitpod-values.yaml file to be used by helm
@@ -114,7 +114,7 @@ aws ssm put-parameter \
   --name "${SSM_KEY}" \
   --type String \
   --value "$(date +%s | sha256sum | base64 | head -c 35 ; echo)" \
-  --region "${AWS_REGION}"
+  --region "${AWS_REGION}" > /dev/null 2>&1
 
 export CLUSTER_NAME
 export KUBECTL_ROLE_ARN
@@ -132,7 +132,7 @@ cdk deploy \
 sleep 5
 ALB_URL=$(kubectl get ingress gitpod -o json | jq -r .status.loadBalancer.ingress[0].hostname)
 if [ -n "${ALB_URL}" ];then
-  echo "Load balancer hostname: ${ALB_URL}"
+  printf '\nLoad balancer hostname: %s\n' "${ALB_URL}"
 fi
 
 echo "done."
