@@ -128,7 +128,7 @@ nodeGroups:
         purpose="${NODEGROUP}"
       )
 
-      /etc/eks/bootstrap.sh ${CLUSTERNAME} --use-max-pods=false $(printf -- "--kubelet-extra-args '--node-labels=%s'" $(IFS=$','; echo "${LABELS[*]}"))
+      /etc/eks/bootstrap.sh ${CLUSTERNAME} --use-max-pods=false $(printf -- "--kubelet-extra-args '--max-pods=110 --node-labels=%s'" $(IFS=$','; echo "${LABELS[*]}"))
 
     # disabled when using spot instances
     #instanceType: m5.large
@@ -192,7 +192,7 @@ nodeGroups:
         purpose="${NODEGROUP}"
       )
 
-      /etc/eks/bootstrap.sh ${CLUSTERNAME} --use-max-pods=false $(printf -- "--kubelet-extra-args '--node-labels=%s'" $(IFS=$','; echo "${LABELS[*]}"))
+      /etc/eks/bootstrap.sh ${CLUSTERNAME} --use-max-pods=false $(printf -- "--kubelet-extra-args '--max-pods=110 --node-labels=%s'" $(IFS=$','; echo "${LABELS[*]}"))
 
     # disabled when using spot instances
     # instanceType: m5.xlarge

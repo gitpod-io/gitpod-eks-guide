@@ -6,7 +6,7 @@ import { Database } from './database';
 import { Registry } from './registry';
 import { importCluster } from './charts/cluster-utils';
 
-const version = "aledbf-retag.6";
+const version = "aledbf-retag.8";
 
 export interface GitpodProps extends cdk.StackProps {
     domain: string

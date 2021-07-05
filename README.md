@@ -2,39 +2,29 @@
 
 ## Provision an EKS cluster
 
-We provide two options to provision and install gitpod:
+Before starting the installation process, you need:
 
-- Using a docker image
-- Using a local script (requires the installation of dependencies)
-
-For both options you need:
-
-An AWS account with Administrator access: [create one now by clicking here](https://aws.amazon.com/getting-started/)
-
+- An AWS account with Administrator access: [create one now by clicking here](https://aws.amazon.com/getting-started/)
 - A SSL Certificate created with [AWS Certificate Manager](https://aws.amazon.com/es/certificate-manager/)
 - .env file with basic details about the environment. We provide an example of such file [here .env.example](.env.example)
-- AWS credentials file. By default, such file is present in `$HOME/.aws/credentials`.
+- AWS credentials file. By default, such a file is present in `$HOME/.aws/credentials`.
 - [eksctl](https://eksctl.io/) configuration file describing the cluster. [Here eks-cluster.yaml](eks-cluster.yaml) you can find an example.
+- [docker](https://docs.docker.com/engine/install/) installed on your machine, or better, a gitpod workspace :)
 
-
-### Using a docker image
-
-The requirements to install the cluster is [docker](https://docs.docker.com/engine/install/) and the configuration files previously mentioned.
-
-**To start the installation run:**
+**To start the installation, execute:**
 
 ```shell
-make run
+make install
 ```
 
 The whole process takes around forty minutes. In the end, the following resources are created:
 
 - an EKS cluster running Kubernetes v1.20
-- Kubernetes nodes using a custom [AMI image](https://github.com/aledbf/amazon-eks-custom-amis/tree/gitpod):
-    - Ubuntu 20.04
-    - Linux kernel 5.13
-    - containerd 1.52
-    - runc 1.0.0
+- Kubernetes nodes using a custom [AMI image](https://github.com/gitpod-io/amazon-eks-custom-amis/tree/gitpod):
+   - Ubuntu 20.04
+   - Linux kernel v5.13
+   - containerd v1.52
+   - runc v1.0.0
 
 - ALB load balancer with TLS termination and re-encryption
 - RDS Mysql database
@@ -49,29 +39,30 @@ The whole process takes around forty minutes. In the end, the following resource
 - [gitpod.io](https://github.com/gitpod-io/gitpod) deployment
 
 
-## Using local scripts
-
-### Prerequisites
-
-For this guide, we need to download the official CLI for Amazon EKS [eksctl](https://github.com/weaveworks/eksctl) binary:
-Confirm the eksctl command works running:
-
-```shell
-eksctl version
-```
-*be sure to install v0.54.0 or above*
-
-Run the script `setup.sh <eksctl configuration>` passing as argument the path to the [eksctl](https://github.com/weaveworks/eksctl) configuration file.
-
-We provide an example of such a configuration file as an example. The cluster
-
-*Please adapt the configuration to the needs of your environment.*
-
-```shell
-setup.sh <eksctl configuration>
-```
-
 ## Verify the installation
+
+First, check that gitpod components are running.
+
+```shell
+kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+blobserve-6bdb9c7f89-lvhxd         2/2     Running   0          6m17s
+content-service-59bd58bc4d-xgv48   1/1     Running   0          6m17s
+dashboard-6ffdf8984-b6f7j          1/1     Running   0          6m17s
+image-builder-5df5694848-wsdvk     3/3     Running   0          6m16s
+jaeger-8679bf6676-zz57m            1/1     Running   0          4h28m
+messagebus-0                       1/1     Running   0          4h11m
+proxy-56c4cdd799-bbfbx             1/1     Running   0          5m33s
+registry-6b75f99844-bhhqd          1/1     Running   0          4h11m
+registry-facade-f7twj              2/2     Running   0          6m12s
+server-64f9cf6b9b-bllgg            2/2     Running   0          6m16s
+ws-daemon-bh6h6                    2/2     Running   0          2m47s
+ws-manager-5d57746845-t74n5        2/2     Running   0          6m16s
+ws-manager-bridge-79f7fcb5-7w4p5   1/1     Running   0          6m16s
+ws-proxy-7fc9665-rchr9             1/1     Running   0          5m57s
+```
+
+TODO: add additional `kubectl log` commands
 
 ### Test gitpod workspace
 
@@ -84,8 +75,10 @@ Load balancer hostname: k8s-default-gitpod-.......elb.amazonaws.com
 
 This is the value of the `CNAME` field that needs to be configured in the DNS domain, for the record `<domain>` and `*.<domain>`
 
-After this two records are configured, please open the URL `<domain>/workspaces`. It should display the gitpod login page similar to
+After these two records are configured, please open the URL `https://<domain>/workspaces`.
+It should display the gitpod login page similar to the next image.
 
+![gitpod login page](./images/gitpod-login.png "gitpod Login Page")
 
 ----
 
@@ -95,9 +88,11 @@ After this two records are configured, please open the URL `<domain>/workspaces`
 kubectl edit configmap auth-providers-config
 ```
 
-TODO
+TODO: instructions to set up providers. Idea: mount secret with auth providers
 
 ## Destroy the cluster and AWS resources
+
+Before running any `cdk` command, please make sure to empty the S3 bucket created during the provisioning; otherwise, the deletion will fail (security measure)
 
 Remove Cloudformation stacks created by CDK running:
 
@@ -106,7 +101,7 @@ cdk destroy --all
 cdk context --clear
 ```
 
-Delete the EKS cluster and all the resources
+Delete the EKS cluster and cloud resources running:
 
 ```shell
 eksctl delete cluster <cluster name>
