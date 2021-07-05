@@ -73,7 +73,7 @@ like:
 Load balancer hostname: k8s-default-gitpod-.......elb.amazonaws.com
 ```
 
-This is the value of the `CNAME` field that needs to be configured in the DNS domain, for the record `<domain>` and `*.<domain>`
+This is the value of the `CNAME` field that needs to be configured in the DNS domain, for the record `<domain>`, `*.ws.<domain>` and `*.<domain>`
 
 After these two records are configured, please open the URL `https://<domain>/workspaces`.
 It should display the gitpod login page similar to the next image.
@@ -106,3 +106,6 @@ Delete the EKS cluster and cloud resources running:
 ```shell
 eksctl delete cluster <cluster name>
 ```
+
+> By default CDK creates a local file [cdk.context.json](https://docs.aws.amazon.com/cdk/latest/guide/context.html) as a cache of values retrieved from your AWS account.
+> Please make sure you delete the file after you destroy the cluster.
