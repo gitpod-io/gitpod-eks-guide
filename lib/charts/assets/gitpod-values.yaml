@@ -181,7 +181,7 @@ components:
         memory: 256Mi
 
   registryFacade:
-    hostname: "{{hostname}}"
+    hostname: "{{domain}}"
     daemonSet: true
 
   server:
