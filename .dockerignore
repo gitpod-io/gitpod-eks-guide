@@ -6,3 +6,5 @@ eks-cluster.yaml
 .env
 gitpod-values.yaml
 gitpod-ingress.yaml
+
+.kubeconfig*

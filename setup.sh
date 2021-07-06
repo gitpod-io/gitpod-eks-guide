@@ -1,7 +1,7 @@
 #!/bin/bash
 
-set -euo pipefail
-
+set -aeuo pipefail
+set -x
 if [ "$#" -ne 1 ]; then
     echo "Invalid number of parameters. Expected <path eksctl configuration>"
     exit 1
@@ -26,7 +26,7 @@ fi
 
 # Create EKS cluster without nodes
 # Generate a new kubeconfig file in the local directory
-export KUBECONFIG=.kubeconfig
+KUBECONFIG=.kubeconfig
 
 if ! eksctl get cluster "${CLUSTER_NAME}" > /dev/null 2>&1; then
   # https://eksctl.io/usage/managing-nodegroups/
@@ -76,11 +76,12 @@ data:
   KUBERNETES_SERVICE_PORT: "443"
 EOF
 
-KUBECTL_ROLE_ARN=$(aws iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
-if [ $? -eq 1 ]; then
+ACCOUNT_ID=$(aws sts get-caller-identity | jq -r .Account)
+if aws iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" > /dev/null 2>&1; then
+  KUBECTL_ROLE_ARN=$(aws iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
+else
   echo "Creating Role for EKS access"
   # Create IAM role and mapping to Kubernetes user and groups.
-  ACCOUNT_ID=$(aws sts get-caller-identity | jq -r .Account)
   POLICY=$(echo -n '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::'; echo -n "$ACCOUNT_ID"; echo -n ':root"},"Action":"sts:AssumeRole","Condition":{}}]}')
   KUBECTL_ROLE_ARN=$(aws iam create-role \
     --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" \
@@ -120,8 +121,8 @@ aws ssm put-parameter \
   --value "$(date +%s | sha256sum | base64 | head -c 35 ; echo)" \
   --region "${AWS_REGION}" > /dev/null 2>&1
 
-export CLUSTER_NAME
-export KUBECTL_ROLE_ARN
+# Bootstrap AWS CDK - https://docs.aws.amazon.com/cdk/latest/guide/bootstrapping.html
+pushd /tmp; cdk bootstrap "aws://${ACCOUNT_ID}/${AWS_REGION}"; popd
 
 # deploy CDK stacks
 cdk deploy \
