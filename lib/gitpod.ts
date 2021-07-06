@@ -6,7 +6,8 @@ import { Database } from './database';
 import { Registry } from './registry';
 import { importCluster } from './charts/cluster-utils';
 
-const version = "aledbf-retag.8";
+// TODO: switch to official gitpod.io build
+const version = "aledbf-retag.9";
 
 export interface GitpodProps extends cdk.StackProps {
     domain: string
@@ -60,6 +61,7 @@ export class GitpodStack extends cdk.Stack {
             manifest.metadata.annotations["alb.ingress.kubernetes.io/ssl-policy"] = "ELBSecurityPolicy-FS-1-2-Res-2020-10";
         }
 
+        // if we have a route53 zone ID, enable external-dns.
         if (process.env.ROUTE53_ZONEID) {
             manifest.metadata.annotations["external-dns.alpha.kubernetes.io/hostname"] = `${props.domain}, *.${props.domain}, *.ws.${props.domain}`;
         }
