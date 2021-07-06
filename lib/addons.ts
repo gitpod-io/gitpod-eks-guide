@@ -7,6 +7,7 @@ import { CertManager } from './charts/cert-manager';
 import { Jaeger } from './charts/jaeger';
 import { ContainerInsights } from './charts/container-insights';
 import { ClusterAutoscaler } from './charts/cluster-autoscaler';
+import { ExternalDNS } from './charts/external-dns';
 
 export class AddonsStack extends cdk.Stack {
 
@@ -22,5 +23,6 @@ export class AddonsStack extends cdk.Stack {
             email: process.env.LETSENCRYPT_EMAIL,
         });
         new Jaeger(this, 'jaeger', {});
+        new ExternalDNS(this, 'external-dns',{});
     }
 }

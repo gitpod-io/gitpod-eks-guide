@@ -78,6 +78,8 @@ This is the value of the `CNAME` field that needs to be configured in the DNS do
 After these two records are configured, please open the URL `https://<domain>/workspaces`.
 It should display the gitpod login page similar to the next image.
 
+> If the property `ROUTE53_ZONEID` is enabled in the .env file, we install [external-dns](https://github.com/kubernetes-sigs/external-dns) and such update is not required
+
 ![gitpod login page](./images/gitpod-login.png "gitpod Login Page")
 
 ----
