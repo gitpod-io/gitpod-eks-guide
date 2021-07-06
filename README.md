@@ -94,20 +94,17 @@ TODO: instructions to set up providers. Idea: mount secret with auth providers
 
 ## Destroy the cluster and AWS resources
 
-Before running any `cdk` command, please make sure to empty the S3 bucket created during the provisioning; otherwise, the deletion will fail (security measure)
+> Before running the command, please make sure to empty the S3 buckets created during the provisioning;
+> otherwise, the deletion will fail (security measure)
 
-Remove Cloudformation stacks created by CDK running:
-
-```shell
-cdk destroy --all
-cdk context --clear
-```
-
-Delete the EKS cluster and cloud resources running:
+Remove Cloudformation stacks and EKS cluster running:
 
 ```shell
-eksctl delete cluster <cluster name>
+make uninstall
 ```
+
+> The command asks for a confirmation:
+> `Are you sure you want to delete: Gitpod, Services/Registry, Services/RDS, Services, Addons, Setup (y/n)?`
 
 > By default CDK creates a local file [cdk.context.json](https://docs.aws.amazon.com/cdk/latest/guide/context.html) as a cache of values retrieved from your AWS account.
-> Please make sure you delete the file after you destroy the cluster.
+> Please make sure you delete the file after you run the ininstall command.
