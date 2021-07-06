@@ -31,7 +31,6 @@ availabilityZones:
   - us-west-2a
   - us-west-2b
   - us-west-2c
-  - us-west-2d
 
 # By default we create a dedicated VPC for the cluster
 # You can use an existing VPC by supplying private and/or public subnets. Please check
@@ -70,7 +69,7 @@ nodeGroups:
     # Use private subnets for nodes
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-0fbf45b5f19d2d33d
+    ami: ami-0215b86d7a2382090
     amiFamily: Ubuntu2004
     asgMetricsCollection: &asgMetricsCollection
       - granularity: 1Minute
@@ -114,7 +113,7 @@ nodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
-      export AMI=ami-0fbf45b5f19d2d33d
+      export AMI=ami-0215b86d7a2382090
       export CLUSTERNAME=gitpod
       export NODEGROUP=workspaces
 
@@ -128,7 +127,9 @@ nodeGroups:
         purpose="${NODEGROUP}"
       )
 
-      /etc/eks/bootstrap.sh ${CLUSTERNAME} --use-max-pods=false $(printf -- "--kubelet-extra-args '--max-pods=110 --node-labels=%s'" $(IFS=$','; echo "${LABELS[*]}"))
+      export USE_MAX_PODS=false
+      export KUBELET_EXTRA_ARGS="$(printf -- "--max-pods=110 --node-labels=%s" $(IFS=$','; echo "${LABELS[*]}"))"
+      /etc/eks/bootstrap.sh ${CLUSTERNAME}
 
     # disabled when using spot instances
     #instanceType: m5.large
@@ -154,7 +155,7 @@ nodeGroups:
     # Use private subnets for nodes
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-0fbf45b5f19d2d33d
+    ami: ami-0215b86d7a2382090
     amiFamily: Ubuntu2004
     asgMetricsCollection: *asgMetricsCollection
     ebsOptimized: true
@@ -178,7 +179,7 @@ nodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
-      export AMI=ami-0fbf45b5f19d2d33d
+      export AMI=ami-0215b86d7a2382090
       export CLUSTERNAME=gitpod
       export NODEGROUP=services
 
@@ -192,7 +193,9 @@ nodeGroups:
         purpose="${NODEGROUP}"
       )
 
-      /etc/eks/bootstrap.sh ${CLUSTERNAME} --use-max-pods=false $(printf -- "--kubelet-extra-args '--max-pods=110 --node-labels=%s'" $(IFS=$','; echo "${LABELS[*]}"))
+      export USE_MAX_PODS=false
+      export KUBELET_EXTRA_ARGS="$(printf -- "--max-pods=110 --node-labels=%s" $(IFS=$','; echo "${LABELS[*]}"))"
+      /etc/eks/bootstrap.sh ${CLUSTERNAME}
 
     # disabled when using spot instances
     # instanceType: m5.xlarge
