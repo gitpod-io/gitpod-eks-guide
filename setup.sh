@@ -11,7 +11,7 @@ function variables_from_context() {
     CLUSTER_NAME=$(yq eval '.metadata.name' "${EKSCTL_CONFIG}")
     AWS_REGION=$(yq eval '.metadata.region' "${EKSCTL_CONFIG}")
 
-    ACCOUNT_ID=$(${AWS_CMD} sts get-caller-identity | jq -r .Account)
+    ACCOUNT_ID=$("${AWS_CMD}" sts get-caller-identity | jq -r .Account)
 
     export KUBECONFIG
     export CLUSTER_NAME
@@ -22,36 +22,38 @@ function variables_from_context() {
 function check_prerequisites() {
     EKSCTL_CONFIG=$1
     if [ ! -f "${EKSCTL_CONFIG}" ]; then
-     echo "The eksctl configuration file ${EKSCTL_CONFIG} does not exist."
-     exit 1
+        echo "The eksctl configuration file ${EKSCTL_CONFIG} does not exist."
+        exit 1
     else
         echo "Using eksctl configuration file: ${EKSCTL_CONFIG}"
     fi
     export EKSCTL_CONFIG
 
     if [ -z "${CERTIFICATE_ARN}" ]; then
-      echo "Missing CERTIFICATE_ARN environment variable."
-      exit 1;
+        echo "Missing CERTIFICATE_ARN environment variable."
+        exit 1;
     fi
 
     if [ -z "${DOMAIN}" ]; then
-      echo "Missing DOMAIN environment variable."
-      exit 1;
+        echo "Missing DOMAIN environment variable."
+        exit 1;
     fi
 
     AWS_CMD="aws"
     if [ -z "${AWS_PROFILE}" ]; then
-      echo "Missing (optional) AWS profile."
+        echo "Missing (optional) AWS profile."
+        unset AWS_PROFILE
     else
-      echo "Using the AWS profile: ${AWS_PROFILE}"
-      AWS_CMD="aws --profile $AWS_PROFILE"
+        echo "Using the AWS profile: ${AWS_PROFILE}"
+        AWS_CMD="aws --profile ${AWS_PROFILE}"
     fi
+    export AWS_CMD
 
     if [ -z "${ROUTE53_ZONEID}" ]; then
-      echo "Missing (optional) ROUTE53_ZONEID environment variable."
-      echo "Please configure the CNAME with the URL of the load balancer manually."
+        echo "Missing (optional) ROUTE53_ZONEID environment variable."
+        echo "Please configure the CNAME with the URL of the load balancer manually."
     else
-      echo "Using external-dns. No manual intervention required."
+        echo "Using external-dns. No manual intervention required."
     fi
 }
 
