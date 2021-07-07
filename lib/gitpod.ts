@@ -7,7 +7,7 @@ import { Registry } from './registry';
 import { importCluster } from './charts/cluster-utils';
 
 // TODO: switch to official gitpod.io build
-const version = "aledbf-retag.10";
+const version = "aledbf-retag.11";
 
 export interface GitpodProps extends cdk.StackProps {
     domain: string
@@ -47,7 +47,7 @@ export class GitpodStack extends cdk.Stack {
             release: 'gitpod',
             repository: 'https://aledbf.github.io/gitpod-chart-cleanup/',
             namespace: 'default',
-            version: '1.0.15',
+            version: '1.0.17',
             wait: true,
             values: loadYaml(doc),
         });
