@@ -91,8 +91,17 @@ It should display the gitpod login page similar to the next image.
 Please check the [Oauth providers integration documentation](https://www.gitpod.io/docs/self-hosted/0.5.0/install/oauth) expected format.
 We provide an [example here](./auth-providers-patch.yaml)
 
+Update the configuration running
+
 ```shell
-kubectl patch configmap auth-providers-config --type merge --patch "$(cat auth-providers-patch.yaml)"
+kubectl patch configmap auth-providers-config \
+  --type merge \
+  --patch "$(cat auth-providers-patch.yaml)"
+```
+
+and restart the `server` component with
+
+```shell
 kubectl rollout restart deployment/server
 ```
 
