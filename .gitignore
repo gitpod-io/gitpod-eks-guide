@@ -15,3 +15,5 @@ gitpod-ingress.yaml
 .env
 
 .kubeconfig*
+
+logs

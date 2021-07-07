@@ -128,6 +128,10 @@ function uninstall() {
     check_ekctl_file "$1"
     variables_from_context
 
+    if ! aws eks describe-cluster --name "${CLUSTER_NAME}" --region "${AWS_REGION}" > /dev/null; then
+        exit 1
+    fi
+
     KUBECTL_ROLE_ARN=$(aws iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
     export KUBECTL_ROLE_ARN
 
