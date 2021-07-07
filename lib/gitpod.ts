@@ -7,7 +7,7 @@ import { Registry } from './registry';
 import { importCluster } from './charts/cluster-utils';
 
 // TODO: switch to official gitpod.io build
-const version = "aledbf-retag.11";
+const version = "aledbf-retag.12";
 
 export interface GitpodProps extends cdk.StackProps {
     domain: string
