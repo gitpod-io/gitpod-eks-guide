@@ -37,4 +37,4 @@ RUN yarn global add aws-cdk npx
 
 VOLUME [ "/gitpod" ]
 
-CMD ["/bin/bash", "-c", "/gitpod/setup.sh eks-cluster.yaml"]
+ENTRYPOINT ["/bin/bash", "-c", "/gitpod/setup.sh"]

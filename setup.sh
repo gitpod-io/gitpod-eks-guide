@@ -1,25 +1,44 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -aeuo pipefail
 set -x
-if [ "$#" -ne 1 ]; then
-    echo "Invalid number of parameters. Expected <path eksctl configuration>"
-    exit 1
+
+if [ -z "${EKSCTL_CONFIG}" ]; then
+  echo "Missing EKSCTL_CONFIG environment variable."
+  exit 1
 fi
 
-EKSCTL_CONFIG=$1
+if [ -z "${CERTIFICATE_ARN}" ]; then
+  echo "Missing CERTIFICATE_ARN environment variable."
+  exit 1;
+fi
+
+if [ -z "${DOMAIN}" ]; then
+  echo "Missing DOMAIN environment variable."
+  exit 1;
+fi
+
 if [ ! -f "${EKSCTL_CONFIG}" ]; then
-    echo "Configuration file ${EKSCTL_CONFIG} does not exist."
+    echo "The eksctl configuration file ${EKSCTL_CONFIG} does not exist."
     exit 1
+else
+    echo "Using eksctl configuration file: ${EKSCTL_CONFIG}"
+fi
+
+AWS_PROFILE_CONFIG=
+if [ -z "${AWS_PROFILE}" ]; then
+  echo "Missing (optional) AWS profile."
+else
+  echo "Using the AWS profile: ${AWS_PROFILE}"
+  AWS_PROFILE_CONFIG="--profile $AWS_PROFILE"
 fi
 
 # extract details form the ecktl configuration file
 CLUSTER_NAME=$(yq eval '.metadata.name' "${EKSCTL_CONFIG}")
 AWS_REGION=$(yq eval '.metadata.region' "${EKSCTL_CONFIG}")
 
-# Check the Certificate exists
-CERT_DETAILS=$(aws acm describe-certificate --certificate-arn "${CERTIFICATE_ARN}" --region "${AWS_REGION}")
-if [ $? -eq 1 ]; then
+# Check the certificate exists
+if ! aws ${AWS_PROFILE_CONFIG} acm describe-certificate --certificate-arn "${CERTIFICATE_ARN}" --region "${AWS_REGION}" >/dev/null 2>&1; then
     echo "The secret ${CERTIFICATE_ARN} does not exist."
     exit 1
 fi
@@ -72,18 +91,18 @@ metadata:
   namespace: calico-system
 data:
   # extract load balanced domain name created by EKS
-  KUBERNETES_SERVICE_HOST: $(aws eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.endpoint" --output text --region "${AWS_REGION}")
+  KUBERNETES_SERVICE_HOST: $(aws ${AWS_PROFILE_CONFIG} eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.endpoint" --output text --region "${AWS_REGION}")
   KUBERNETES_SERVICE_PORT: "443"
 EOF
 
-ACCOUNT_ID=$(aws sts get-caller-identity | jq -r .Account)
-if aws iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" > /dev/null 2>&1; then
-  KUBECTL_ROLE_ARN=$(aws iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
+ACCOUNT_ID=$(aws ${AWS_PROFILE_CONFIG} sts get-caller-identity --query 'Account')
+if aws ${AWS_PROFILE_CONFIG} iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" >/dev/null 2>&1; then
+  KUBECTL_ROLE_ARN=$(aws ${AWS_PROFILE_CONFIG} iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
 else
   echo "Creating Role for EKS access"
   # Create IAM role and mapping to Kubernetes user and groups.
   POLICY=$(echo -n '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::'; echo -n "$ACCOUNT_ID"; echo -n ':root"},"Action":"sts:AssumeRole","Condition":{}}]}')
-  KUBECTL_ROLE_ARN=$(aws iam create-role \
+  KUBECTL_ROLE_ARN=$(aws ${AWS_PROFILE_CONFIG} iam create-role \
     --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" \
     --description "Kubernetes role (for AWS IAM Authenticator for Kubernetes)." \
     --assume-role-policy-document "$POLICY" \
@@ -114,7 +133,7 @@ kubectl delete pod -n tigera-operator -l k8s-app=tigera-operator > /dev/null 2>&
 # TODO: remove once we can reference a secret in the helm chart.
 # generated password cannot excede 41 characters (RDS limitation)
 SSM_KEY="/gitpod/cluster/${CLUSTER_NAME}/region/${AWS_REGION}"
-aws ssm put-parameter \
+aws ${AWS_PROFILE_CONFIG} ssm put-parameter \
   --overwrite \
   --name "${SSM_KEY}" \
   --type String \
@@ -122,7 +141,7 @@ aws ssm put-parameter \
   --region "${AWS_REGION}" > /dev/null 2>&1
 
 # Bootstrap AWS CDK - https://docs.aws.amazon.com/cdk/latest/guide/bootstrapping.html
-pushd /tmp; cdk bootstrap "aws://${ACCOUNT_ID}/${AWS_REGION}"; popd
+pushd /tmp; cdk bootstrap "aws://"${ACCOUNT_ID}"/${AWS_REGION}"; popd
 
 # deploy CDK stacks
 cdk deploy \
@@ -130,7 +149,7 @@ cdk deploy \
   --context region="${AWS_REGION}" \
   --context domain="${DOMAIN}" \
   --context certificatearn="${CERTIFICATE_ARN}" \
-  --context identityoidcissuer="$(aws eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.identity.oidc.issuer" --output text --region "${AWS_REGION}")" \
+  --context identityoidcissuer="$(aws ${AWS_PROFILE_CONFIG} eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.identity.oidc.issuer" --output text --region "${AWS_REGION}")" \
   --require-approval never \
   --all
 
