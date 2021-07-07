@@ -35,6 +35,6 @@ RUN yarn --pure-lockfile --non-interactive
 
 RUN yarn global add aws-cdk npx
 
-VOLUME [ "/gitpod" ]
+COPY . /gitpod
 
 ENTRYPOINT ["/gitpod/setup.sh"]

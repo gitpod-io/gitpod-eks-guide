@@ -11,17 +11,18 @@ build: ## Build docker image containing the required tools for the installation
 
 DOCKER_RUN_CMD = docker run -it \
 	--env-file ${PWD}/.env \
-	--volume ${PWD}:/gitpod \
+	--env NODE_ENV=production \
+	--volume ${PWD}/.kubeconfig:/gitpod/.kubeconfig \
 	--volume ${PWD}/logs:/root/.npm/_logs \
 	--volume ${HOME}/.aws/credentials:/root/.aws/credentials \
 	${IMG} $(1)
 
 install: build ## Install gitpod
-	@touch .kubeconfig
+	@echo "Starting install process..."
 	@$(call DOCKER_RUN_CMD, --install)
 
 uninstall: build ## Uninstall gitpod
-	@mkdir -p ${PWD}/logs
+	@echo "Starting uninstall process..."
 	@$(call DOCKER_RUN_CMD, --uninstall)
 
 help:  ## Display this help

@@ -128,24 +128,27 @@ function uninstall() {
     check_ekctl_file "$1"
     variables_from_context
 
-    if ! aws eks describe-cluster --name "${CLUSTER_NAME}" --region "${AWS_REGION}" > /dev/null; then
-        exit 1
+    read -p "Are you sure you want to delete: Gitpod, Services/Registry, Services/RDS, Services, Addons, Setup (y/n)? " -n 1 -r
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if ! aws eks describe-cluster --name "${CLUSTER_NAME}" --region "${AWS_REGION}" > /dev/null; then
+            exit 1
+        fi
+
+        KUBECTL_ROLE_ARN=$(aws iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
+        export KUBECTL_ROLE_ARN
+
+        cdk destroy \
+            --context clusterName="${CLUSTER_NAME}" \
+            --context region="${AWS_REGION}" \
+            --context domain="${DOMAIN}" \
+            --context certificatearn="${CERTIFICATE_ARN}" \
+            --context identityoidcissuer="3333" \
+            --require-approval never \
+            --force \
+            --all \
+        && cdk context --clear \
+        && eksctl delete cluster "${CLUSTER_NAME}"
     fi
-
-    KUBECTL_ROLE_ARN=$(aws iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
-    export KUBECTL_ROLE_ARN
-
-    cdk destroy \
-        --context clusterName="${CLUSTER_NAME}" \
-        --context region="${AWS_REGION}" \
-        --context domain="${DOMAIN}" \
-        --context certificatearn="${CERTIFICATE_ARN}" \
-        --context identityoidcissuer="$(aws eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.identity.oidc.issuer" --output text --region "${AWS_REGION}")" \
-        --require-approval never \
-        --all
-
-    cdk context --clear
-    eksctl delete cluster "${CLUSTER_NAME}"
 }
 
 function main() {
