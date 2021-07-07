@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -11,7 +11,7 @@ function variables_from_context() {
     CLUSTER_NAME=$(yq eval '.metadata.name' "${EKSCTL_CONFIG}")
     AWS_REGION=$(yq eval '.metadata.region' "${EKSCTL_CONFIG}")
 
-    ACCOUNT_ID=$(aws sts get-caller-identity | jq -r .Account)
+    ACCOUNT_ID=$(${AWS_CMD} sts get-caller-identity | jq -r .Account)
 
     export KUBECONFIG
     export CLUSTER_NAME
@@ -19,14 +19,40 @@ function variables_from_context() {
     export ACCOUNT_ID
 }
 
-function check_ekctl_file() {
+function check_prerequisites() {
     EKSCTL_CONFIG=$1
     if [ ! -f "${EKSCTL_CONFIG}" ]; then
-        echo "Configuration file ${EKSCTL_CONFIG} does not exist."
-        exit 1
+     echo "The eksctl configuration file ${EKSCTL_CONFIG} does not exist."
+     exit 1
+    else
+        echo "Using eksctl configuration file: ${EKSCTL_CONFIG}"
+    fi
+    export EKSCTL_CONFIG
+
+    if [ -z "${CERTIFICATE_ARN}" ]; then
+      echo "Missing CERTIFICATE_ARN environment variable."
+      exit 1;
     fi
 
-    export EKSCTL_CONFIG
+    if [ -z "${DOMAIN}" ]; then
+      echo "Missing DOMAIN environment variable."
+      exit 1;
+    fi
+
+    AWS_CMD="aws"
+    if [ -z "${AWS_PROFILE}" ]; then
+      echo "Missing (optional) AWS profile."
+    else
+      echo "Using the AWS profile: ${AWS_PROFILE}"
+      AWS_CMD="aws --profile $AWS_PROFILE"
+    fi
+
+    if [ -z "${ROUTE53_ZONEID}" ]; then
+      echo "Missing (optional) ROUTE53_ZONEID environment variable."
+      echo "Please configure the CNAME with the URL of the load balancer manually."
+    else
+      echo "Using external-dns. No manual intervention required."
+    fi
 }
 
 # Bootstrap AWS CDK - https://docs.aws.amazon.com/cdk/latest/guide/bootstrapping.html
@@ -35,14 +61,12 @@ function ensure_aws_cdk() {
 }
 
 function install() {
-    check_ekctl_file "$1"
+    check_prerequisites "$1"
     variables_from_context
     ensure_aws_cdk
 
-    # Check the Certificate exists
-    # shellcheck disable=SC2034
-    CERT_DETAILS=$(aws acm describe-certificate --certificate-arn "${CERTIFICATE_ARN}" --region "${AWS_REGION}")
-    if [ $? -eq 1 ]; then
+    # Check the certificate exists
+    if ! ${AWS_CMD} acm describe-certificate --certificate-arn "${CERTIFICATE_ARN}" --region "${AWS_REGION}" >/dev/null 2>&1; then
         echo "The secret ${CERTIFICATE_ARN} does not exist."
         exit 1
     fi
@@ -60,13 +84,13 @@ function install() {
     # Install Calico.
     kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
 
-    if aws iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" > /dev/null 2>&1; then
-        KUBECTL_ROLE_ARN=$(aws iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
+    if ${AWS_CMD} iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" > /dev/null 2>&1; then
+        KUBECTL_ROLE_ARN=$(${AWS_CMD} iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
     else
         echo "Creating Role for EKS access"
         # Create IAM role and mapping to Kubernetes user and groups.
         POLICY=$(echo -n '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::'; echo -n "$ACCOUNT_ID"; echo -n ':root"},"Action":"sts:AssumeRole","Condition":{}}]}')
-        KUBECTL_ROLE_ARN=$(aws iam create-role \
+        KUBECTL_ROLE_ARN=$(${AWS_CMD} iam create-role \
             --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" \
             --description "Kubernetes role (for AWS IAM Authenticator for Kubernetes)." \
             --assume-role-policy-document "$POLICY" \
@@ -98,7 +122,7 @@ function install() {
     # TODO: remove once we can reference a secret in the helm chart.
     # generated password cannot excede 41 characters (RDS limitation)
     SSM_KEY="/gitpod/cluster/${CLUSTER_NAME}/region/${AWS_REGION}"
-    aws ssm put-parameter \
+    ${AWS_CMD} ssm put-parameter \
         --overwrite \
         --name "${SSM_KEY}" \
         --type String \
@@ -111,7 +135,7 @@ function install() {
         --context region="${AWS_REGION}" \
         --context domain="${DOMAIN}" \
         --context certificatearn="${CERTIFICATE_ARN}" \
-        --context identityoidcissuer="$(aws eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.identity.oidc.issuer" --output text --region "${AWS_REGION}")" \
+        --context identityoidcissuer="$(${AWS_CMD} eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.identity.oidc.issuer" --output text --region "${AWS_REGION}")" \
         --require-approval never \
         --all
 
@@ -125,16 +149,16 @@ function install() {
 }
 
 function uninstall() {
-    check_ekctl_file "$1"
+    check_prerequisites "$1"
     variables_from_context
 
     read -p "Are you sure you want to delete: Gitpod, Services/Registry, Services/RDS, Services, Addons, Setup (y/n)? " -n 1 -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        if ! aws eks describe-cluster --name "${CLUSTER_NAME}" --region "${AWS_REGION}" > /dev/null; then
+        if ! ${AWS_CMD} eks describe-cluster --name "${CLUSTER_NAME}" --region "${AWS_REGION}" > /dev/null; then
             exit 1
         fi
 
-        KUBECTL_ROLE_ARN=$(aws iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
+        KUBECTL_ROLE_ARN=$(${AWS_CMD} iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
         export KUBECTL_ROLE_ARN
 
         cdk destroy \
@@ -165,7 +189,8 @@ function main() {
             uninstall "eks-cluster.yaml"
         ;;
         *)
-            echo "unknown command $1, Usage: $0 [--install|--uninstall]"
+            echo "Unknown command: $1"
+            echo "Usage: $0 [--install|--uninstall]"
         ;;
     esac
     echo "done"
