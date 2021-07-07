@@ -14,7 +14,7 @@ DOCKER_RUN_CMD = docker run -it \
 	--env NODE_ENV=production \
 	--volume ${PWD}/.kubeconfig:/gitpod/.kubeconfig \
 	--volume ${PWD}/logs:/root/.npm/_logs \
-	--volume ${HOME}/.aws/credentials:/root/.aws/credentials \
+	--volume ${HOME}/.aws:/root/.aws \
 	${IMG} $(1)
 
 install: build ## Install gitpod
