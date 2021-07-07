@@ -4,12 +4,15 @@
 
 Before starting the installation process, you need:
 
-- An AWS account with Administrator access: [create one now by clicking here](https://aws.amazon.com/getting-started/)
+- An AWS account with Administrator access
+  - [Create one now by clicking here](https://aws.amazon.com/getting-started/)
 - A SSL Certificate created with [AWS Certificate Manager](https://aws.amazon.com/es/certificate-manager/)
-- .env file with basic details about the environment. We provide an example of such file [here .env.example](.env.example)
-- AWS credentials file. By default, such a file is present in `$HOME/.aws/credentials`.
-- [eksctl](https://eksctl.io/) configuration file describing the cluster. [Here eks-cluster.yaml](eks-cluster.yaml) you can find an example.
-- [docker](https://docs.docker.com/engine/install/) installed on your machine, or better, a gitpod workspace :)
+- AWS credentials set up. By default, those configs are present in `$HOME/.aws/`.
+- [eksctl](https://eksctl.io/) config file describing the cluster.
+  - [Here eks-cluster.yaml](eks-cluster.yaml) you can find an example.
+- A `.env` file with basic details about the environment.
+  - We provide an example of such file [here](.env.example).
+- [Docker](https://docs.docker.com/engine/install/) installed on your machine, or better, a Gitpod workspace :)
 
 **To start the installation, execute:**
 
@@ -21,10 +24,10 @@ The whole process takes around forty minutes. In the end, the following resource
 
 - an EKS cluster running Kubernetes v1.20
 - Kubernetes nodes using a custom [AMI image](https://github.com/gitpod-io/amazon-eks-custom-amis/tree/gitpod):
-   - Ubuntu 20.04
-   - Linux kernel v5.13
-   - containerd v1.52
-   - runc v1.0.0
+  - Ubuntu 20.04
+  - Linux kernel v5.13
+  - containerd v1.52
+  - runc v1.0.0
 
 - ALB load balancer with TLS termination and re-encryption
 - RDS Mysql database
@@ -37,7 +40,6 @@ The whole process takes around forty minutes. In the end, the following resource
 - [Jaeger operator](https://github.com/jaegertracing/helm-charts/tree/main/charts/jaeger-operator) - and Jaeger deployment for gitpod distributed tracing
 - [metrics-server](https://github.com/kubernetes-sigs/metrics-server)
 - [gitpod.io](https://github.com/gitpod-io/gitpod) deployment
-
 
 ## Verify the installation
 
@@ -64,7 +66,7 @@ ws-proxy-7fc9665-rchr9             1/1     Running   0          5m57s
 
 TODO: add additional `kubectl log` commands
 
-### Test gitpod workspace
+### Test Gitpod workspaces
 
 When the provisioning and configuration of the cluster is done, the script shows the URL of the load balancer,
 like:
@@ -80,11 +82,11 @@ It should display the gitpod login page similar to the next image.
 
 > If the property `ROUTE53_ZONEID` is enabled in the .env file, we install [external-dns](https://github.com/kubernetes-sigs/external-dns) and such update is not required
 
-![gitpod login page](./images/gitpod-login.png "gitpod Login Page")
+![Gitpod login page](./images/gitpod-login.png "Gitpod Login Page")
 
 ----
 
-## Update gitpod auth providers
+## Update Gitpod auth providers
 
 ```shell
 kubectl edit configmap auth-providers-config
@@ -105,6 +107,6 @@ make uninstall
 
 > The command asks for a confirmation:
 > `Are you sure you want to delete: Gitpod, Services/Registry, Services/RDS, Services, Addons, Setup (y/n)?`
-
+>
 > By default CDK creates a local file [cdk.context.json](https://docs.aws.amazon.com/cdk/latest/guide/context.html) as a cache of values retrieved from your AWS account.
-> Please make sure you delete the file after you run the ininstall command.
+> Please make sure you delete the file after you run the uninstall command.
