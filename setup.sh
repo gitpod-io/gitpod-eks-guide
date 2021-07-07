@@ -31,7 +31,7 @@ function check_ekctl_file() {
 
 # Bootstrap AWS CDK - https://docs.aws.amazon.com/cdk/latest/guide/bootstrapping.html
 function ensure_aws_cdk() {
-    pushd /tmp; cdk bootstrap "aws://${ACCOUNT_ID}/${AWS_REGION}"; popd
+    pushd /tmp > /dev/null 2>&1; cdk bootstrap "aws://${ACCOUNT_ID}/${AWS_REGION}"; popd > /dev/null 2>&1
 }
 
 function install() {
@@ -57,43 +57,8 @@ function install() {
     # https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt
     # https://docs.aws.amazon.com/eks/latest/userguide/pod-networking.html
     kubectl patch ds -n kube-system aws-node -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
-    # Install Calico opetator.
-    kubectl apply -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
-
-    # Create Calico CNI installation
-  kubectl apply -f - <<EOF
-apiVersion: operator.tigera.io/v1
-kind: Installation
-metadata:
-  name: default
-spec:
-  calicoNetwork:
-    ipPools:
-      - blockSize: 26
-        cidr: 172.16.0.0/16
-        encapsulation: VXLANCrossSubnet
-        natOutgoing: Enabled
-        nodeSelector: all()
-    linuxDataplane: Iptables
-  cni:
-    type: Calico
-  kubernetesProvider: EKS
-  flexVolumePath: /var/lib/kubelet/plugins
-EOF
-
-    # Setup Calico
-    kubectl create namespace calico-system > /dev/null 2>&1 || true
-  kubectl apply -f - <<EOF
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: kubernetes-services-endpoint
-  namespace: calico-system
-data:
-  # extract load balanced domain name created by EKS
-  KUBERNETES_SERVICE_HOST: $(aws eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.endpoint" --output text --region "${AWS_REGION}")
-  KUBERNETES_SERVICE_PORT: "443"
-EOF
+    # Install Calico.
+    kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
 
     if aws iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" > /dev/null 2>&1; then
         KUBECTL_ROLE_ARN=$(aws iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
@@ -139,9 +104,6 @@ EOF
         --type String \
         --value "$(date +%s | sha256sum | base64 | head -c 35 ; echo)" \
         --region "${AWS_REGION}" > /dev/null 2>&1
-
-    # Bootstrap AWS CDK - https://docs.aws.amazon.com/cdk/latest/guide/bootstrapping.html
-    pushd /tmp; cdk bootstrap "aws://${ACCOUNT_ID}/${AWS_REGION}"; popd
 
     # deploy CDK stacks
     cdk deploy \
