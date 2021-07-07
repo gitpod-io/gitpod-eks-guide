@@ -88,11 +88,15 @@ It should display the gitpod login page similar to the next image.
 
 ## Update Gitpod auth providers
 
+Please check the [Oauth providers integration documentation](https://www.gitpod.io/docs/self-hosted/0.5.0/install/oauth) expected format.
+We provide an [example here](./auth-providers-patch.yaml)
+
 ```shell
-kubectl edit configmap auth-providers-config
+kubectl patch configmap auth-providers-config --type merge --patch "$(cat auth-providers-patch.yaml)"
+kubectl rollout restart deployment/server
 ```
 
-TODO: instructions to set up providers. Idea: mount secret with auth providers
+> We are aware of the limitation of this approach, and we are working to improve the helm chart to avoid this manual step.
 
 ## Destroy the cluster and AWS resources
 

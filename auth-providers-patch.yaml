@@ -1,0 +1,19 @@
+data:
+  # Please check the documentation for details the expected format
+  # https://www.gitpod.io/docs/self-hosted/0.5.0/install/oauth
+  auth-providers.json: |
+    [
+      {
+        "id": "Public-GitHub",
+        "host": "github.com",
+        "type": "GitHub",
+        "oauth": {
+          "clientId": "XXXXXXXXXXXX",
+          "clientSecret": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+          "callBackUrl": "https://<my domain>/auth/github/callback",
+          "settingsUrl": "hhttps://mygithub.com/settings/applications/<application ID>"
+        },
+        "description": "",
+        "icon": ""
+      }
+    ]
