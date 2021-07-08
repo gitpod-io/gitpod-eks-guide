@@ -31,7 +31,8 @@ export class ServicesStack extends cdk.Stack {
         this.registry = new Registry(this, 'Registry', {
             env: props.env,
             clusterName: `${process.env.CLUSTER_NAME}`,
-            bucketName: `container-registry-${process.env.CLUSTER_NAME}`,
+            bucketName: `${process.env.CONTAINER_REGISTRY_BUCKET}`,
+            createBucket: process.env.CREATE_S3_BUCKET === 'true',
         });
     }
 }

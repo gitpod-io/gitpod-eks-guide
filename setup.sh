@@ -13,10 +13,20 @@ function variables_from_context() {
 
     ACCOUNT_ID=$("${AWS_CMD}" sts get-caller-identity | jq -r .Account)
 
+    if [ -z "${CONTAINER_REGISTRY_BUCKET}" ]; then
+        CONTAINER_REGISTRY_BUCKET="container-registry-${CLUSTER_NAME}-${ACCOUNT_ID}"
+    fi
+
+    CREATE_S3_BUCKET="false"
+    if "${AWS_CMD}" s3api head-bucket --bucket "${CONTAINER_REGISTRY_BUCKET}" 2>/dev/null; then
+        CREATE_S3_BUCKET="true"
+    fi
+
     export KUBECONFIG
     export CLUSTER_NAME
     export AWS_REGION
     export ACCOUNT_ID
+    export CREATE_S3_BUCKET
 }
 
 function check_prerequisites() {
@@ -163,17 +173,20 @@ function uninstall() {
         KUBECTL_ROLE_ARN=$(${AWS_CMD} iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
         export KUBECTL_ROLE_ARN
 
+        SSM_KEY="/gitpod/cluster/${CLUSTER_NAME}/region/${AWS_REGION}"
+
         cdk destroy \
             --context clusterName="${CLUSTER_NAME}" \
             --context region="${AWS_REGION}" \
             --context domain="${DOMAIN}" \
             --context certificatearn="${CERTIFICATE_ARN}" \
-            --context identityoidcissuer="3333" \
+            --context identityoidcissuer="$(${AWS_CMD} eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.identity.oidc.issuer" --output text --region "${AWS_REGION}")" \
             --require-approval never \
             --force \
             --all \
         && cdk context --clear \
-        && eksctl delete cluster "${CLUSTER_NAME}"
+        && eksctl delete cluster "${CLUSTER_NAME}" \
+        && ${AWS_CMD} ssm delete-parameter --overwrite --name "${SSM_KEY}"
     fi
 }
 

@@ -1,5 +1,5 @@
 import * as cdk from '@aws-cdk/core';
-import { Bucket, BucketEncryption, BlockPublicAccess } from '@aws-cdk/aws-s3';
+import { Bucket, IBucket, BucketEncryption, BlockPublicAccess } from '@aws-cdk/aws-s3';
 import { RemovalPolicy } from '@aws-cdk/core';
 import * as iam from '@aws-cdk/aws-iam';
 import { CfnAccessKey } from '@aws-cdk/aws-iam';
@@ -7,6 +7,7 @@ import { CfnAccessKey } from '@aws-cdk/aws-iam';
 export interface RegistryProps extends cdk.StackProps {
     readonly clusterName: string
     readonly bucketName: string
+    readonly createBucket: boolean
 }
 
 export class Registry extends cdk.Stack {
@@ -17,13 +18,21 @@ export class Registry extends cdk.Stack {
     constructor(scope: cdk.Construct, id: string, props: RegistryProps) {
         super(scope, id, props);
 
-        const registryBucket = new Bucket(this, "RegistryBucket", {
-            encryption: BucketEncryption.KMS_MANAGED,
-            bucketName: props.bucketName,
-            publicReadAccess: false,
-            blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-            removalPolicy: RemovalPolicy.DESTROY
-        });
+        let registryBucket: IBucket;
+
+        if (props.createBucket) {
+            registryBucket = new Bucket(this, "RegistryBucket", {
+                encryption: BucketEncryption.KMS_MANAGED,
+                bucketName: props.bucketName,
+                publicReadAccess: false,
+                blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+                removalPolicy: RemovalPolicy.DESTROY
+            });
+        } else {
+            registryBucket = Bucket.fromBucketAttributes(this, 'RegistryBucket', {
+                bucketArn: `arn:aws:s3:::${props.bucketName}`,
+            });
+        }
 
         this._bucket = props.bucketName;
 
