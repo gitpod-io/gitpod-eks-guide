@@ -186,7 +186,7 @@ function uninstall() {
             --all \
         && cdk context --clear \
         && eksctl delete cluster "${CLUSTER_NAME}" \
-        && ${AWS_CMD} ssm delete-parameter --overwrite --name "${SSM_KEY}"
+        && ${AWS_CMD} ssm delete-parameter --name "${SSM_KEY}" --region "${AWS_REGION}"
     fi
 }
 
