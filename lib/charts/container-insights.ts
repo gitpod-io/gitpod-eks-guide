@@ -36,6 +36,15 @@ export class ContainerInsights extends cdk.Construct {
                     name: serviceAccount.serviceAccountName,
                 },
                 cloudWatch: this.parseCloudWatchOptions(`${process.env.AWS_REGION}`, serviceAccount),
+                elasticsearch: {
+                    enabled: false
+                },
+                kinesis: {
+                    enabled: false
+                },
+                firehose: {
+                    enabled: false
+                },
             }
         });
         helmChart.node.addDependency(serviceAccount);
