@@ -183,7 +183,15 @@ components:
   registryFacade:
     hostname: "{{domain}}"
     daemonSet: true
-
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: purpose
+              operator: In
+              values:
+              - workspaces
   server:
     defaultFeatureFlags: [] # ["full_workspace_backup"]
     imageName: server
