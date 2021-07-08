@@ -37,7 +37,7 @@ workspaceSizing:
       controlPeriod: 15m
       samplingPeriod: 10s
 
-# TODO: test CPU burn to trigger issues with systemd
+# default affinity for gitpod components
 affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
