@@ -69,12 +69,15 @@ nodeGroups:
     # Please configure the size of the volume and additional features
     # https://eksctl.io/usage/schema/#nodeGroups-volumeType
     # https://aws.amazon.com/es/ebs/pricing/
-    volumeSize: 50
+    volumeSize: 100
     volumeType: gp3
+    volumeIOPS: 6000
+    volumeThroughput: 500
+    ebsOptimized: true
     # Use private subnets for nodes
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-0215b86d7a2382090
+    ami: ami-0ea449d16eb31a003
     amiFamily: Ubuntu2004
     asgMetricsCollection: &asgMetricsCollection
       - granularity: 1Minute
@@ -87,7 +90,6 @@ nodeGroups:
           - GroupStandbyInstances
           - GroupTerminatingInstances
           - GroupTotalInstances
-    ebsOptimized: true
     ssh:
       enableSsm: true
     taints:
@@ -118,7 +120,7 @@ nodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
-      export AMI=ami-0215b86d7a2382090
+      export AMI=ami-0ea449d16eb31a003
       export CLUSTERNAME=gitpod
       export NODEGROUP=workspaces
 
@@ -137,11 +139,11 @@ nodeGroups:
       /etc/eks/bootstrap.sh ${CLUSTERNAME}
 
     # disabled when using spot instances
-    #instanceType: m5.large
+    #instanceType: r5n.xlarge
     # Spot instances documentation https://eksctl.io/usage/spot-instances/
     instancesDistribution:
-      instanceTypes: ["m5.xlarge","m5.2xlarge"]
-      maxPrice: 0.1
+      instanceTypes: ["r5n.xlarge","r5n.2xlarge"]
+      maxPrice: 0.15
       onDemandBaseCapacity: 0
       onDemandPercentageAboveBaseCapacity: 0
       spotInstancePools: 1
@@ -155,15 +157,17 @@ nodeGroups:
     # Please configure the size of the volume and additional features
     # https://eksctl.io/usage/schema/#nodeGroups-volumeType
     # https://aws.amazon.com/es/ebs/pricing/
-    volumeSize: 50
+    volumeSize: 100
     volumeType: gp3
+    volumeIOPS: 6000
+    volumeThroughput: 500
+    ebsOptimized: true
     # Use private subnets for nodes
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-0215b86d7a2382090
+    ami: ami-0ea449d16eb31a003
     amiFamily: Ubuntu2004
     asgMetricsCollection: *asgMetricsCollection
-    ebsOptimized: true
     ssh:
       enableSsm: true
     #taints:
@@ -184,7 +188,7 @@ nodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
-      export AMI=ami-0215b86d7a2382090
+      export AMI=ami-0ea449d16eb31a003
       export CLUSTERNAME=gitpod
       export NODEGROUP=services
 
@@ -203,11 +207,11 @@ nodeGroups:
       /etc/eks/bootstrap.sh ${CLUSTERNAME}
 
     # disabled when using spot instances
-    # instanceType: m5.xlarge
+    # instanceType: r5n.xlarge
     # Spot instances documentation https://eksctl.io/usage/spot-instances/
     instancesDistribution:
-      maxPrice: 0.1
-      instanceTypes: ["m5.xlarge","m5.2xlarge"]
+      maxPrice: 0.15
+      instanceTypes: ["r5n.xlarge","r5n.2xlarge"]
       onDemandBaseCapacity: 0
       onDemandPercentageAboveBaseCapacity: 0
       spotInstancePools: 1
