@@ -26,7 +26,7 @@ export class Registry extends cdk.Stack {
                 bucketName: props.bucketName,
                 publicReadAccess: false,
                 blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-                removalPolicy: RemovalPolicy.DESTROY
+                removalPolicy: RemovalPolicy.RETAIN
             });
         } else {
             registryBucket = Bucket.fromBucketAttributes(this, 'RegistryBucket', {
