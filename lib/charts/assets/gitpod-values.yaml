@@ -282,6 +282,15 @@ components:
       nodeRoots:
       - /var/lib
       - /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: purpose
+              operator: In
+              values:
+              - workspaces
 
   contentService:
     name: content-service
