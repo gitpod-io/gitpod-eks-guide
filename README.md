@@ -9,7 +9,7 @@ Before starting the installation process, you need:
 - A SSL Certificate created with [AWS Certificate Manager](https://aws.amazon.com/es/certificate-manager/)
 - AWS credentials set up. By default, those configs are present in `$HOME/.aws/`.
 - [eksctl](https://eksctl.io/) config file describing the cluster.
-  - [Here eks-cluster.yaml](eks-cluster.yaml) you can find an example.
+  - Here is an [eks-cluster.yaml](eks-cluster.yaml) you can use as example.
 - A `.env` file with basic details about the environment.
   - We provide an example of such file [here](.env.example).
 - [Docker](https://docs.docker.com/engine/install/) installed on your machine, or better, a Gitpod workspace :)
@@ -77,7 +77,7 @@ Load balancer hostname: k8s-default-gitpod-.......elb.amazonaws.com
 
 This is the value of the `CNAME` field that needs to be configured in the DNS domain, for the record `<domain>`, `*.ws.<domain>` and `*.<domain>`
 
-After these two records are configured, please open the URL `https://<domain>/workspaces`.
+After these three records are configured, please open the URL `https://<domain>/workspaces`.
 It should display the gitpod login page similar to the next image.
 
 > If the property `ROUTE53_ZONEID` is enabled in the .env file, we install [external-dns](https://github.com/kubernetes-sigs/external-dns) and such update is not required
