@@ -14,6 +14,21 @@ Before starting the installation process, you need:
   - We provide an example of such file [here](.env.example).
 - [Docker](https://docs.docker.com/engine/install/) installed on your machine, or better, a Gitpod workspace :)
 
+### Choose an Amazon Machine Image (AMI)
+
+Please update the `ami` field in the [eks-cluster.yaml](eks-cluster.yaml) file with the proper AMI ID for the region of the cluster.
+
+|Region | AMI|
+| -------------- | --------------------- |
+|us-west-2       | ami-0ea449d16eb31a003 |
+|eu-west-1       | ami-0182fe91a1bcfdf96 |
+|eu-west-2       | ami-0cdbe932b356da7b7 |
+|eu-central-1    | ami-0ab4d825b73e30d56 |
+|us-east-1       | ami-0ee46264e2e676521 |
+|us-east-2       | ami-062a21099569f9137 |
+|us-west-1       | ami-01e33c563b099067c |
+
+
 **To start the installation, execute:**
 
 ```shell
