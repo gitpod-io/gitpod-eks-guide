@@ -13,8 +13,13 @@ function variables_from_context() {
 
     ACCOUNT_ID=$(${AWS_CMD} sts get-caller-identity | jq -r .Account)
 
+    # use the default bucket?
+    if [ -z "${CONTAINER_REGISTRY_BUCKET}" ]; then
+        CONTAINER_REGISTRY_BUCKET="container-registry-${CLUSTER_NAME}-${ACCOUNT_ID}"
+    fi
+
     CREATE_S3_BUCKET="false"
-    if "${AWS_CMD}" s3api head-bucket --bucket "${CONTAINER_REGISTRY_BUCKET}" 2>/dev/null; then
+    if ! "${AWS_CMD}" s3api head-bucket --bucket "${CONTAINER_REGISTRY_BUCKET}" >/dev/null 2>&1; then
         CREATE_S3_BUCKET="true"
     fi
 
@@ -23,6 +28,7 @@ function variables_from_context() {
     export AWS_REGION
     export ACCOUNT_ID
     export CREATE_S3_BUCKET
+    export CONTAINER_REGISTRY_BUCKET
 }
 
 function check_prerequisites() {
@@ -60,10 +66,6 @@ function check_prerequisites() {
         echo "Please configure the CNAME with the URL of the load balancer manually."
     else
         echo "Using external-dns. No manual intervention required."
-    fi
-
-    if [ -z "${CONTAINER_REGISTRY_BUCKET}" ]; then
-        CONTAINER_REGISTRY_BUCKET="container-registry-${CLUSTER_NAME}-${ACCOUNT_ID}"
     fi
 }
 
