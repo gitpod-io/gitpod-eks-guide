@@ -114,9 +114,6 @@ make auth
 
 ## Destroy the cluster and AWS resources
 
-> Before running the command, please make sure to empty the S3 buckets created during the provisioning;
-> otherwise, the deletion will fail (security measure)
-
 Remove Cloudformation stacks and EKS cluster running:
 
 ```shell
