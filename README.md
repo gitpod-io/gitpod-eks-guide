@@ -18,16 +18,15 @@ Before starting the installation process, you need:
 
 Please update the `ami` field in the [eks-cluster.yaml](eks-cluster.yaml) file with the proper AMI ID for the region of the cluster.
 
-|Region | AMI|
-| -------------- | --------------------- |
-|us-west-2       | ami-0ea449d16eb31a003 |
-|eu-west-1       | ami-0182fe91a1bcfdf96 |
-|eu-west-2       | ami-0cdbe932b356da7b7 |
-|eu-central-1    | ami-0ab4d825b73e30d56 |
-|us-east-1       | ami-0ee46264e2e676521 |
-|us-east-2       | ami-062a21099569f9137 |
-|us-west-1       | ami-01e33c563b099067c |
-
+| Region       | AMI                   |
+| ------------ | --------------------- |
+| us-west-2    | ami-0ea449d16eb31a003 |
+| eu-west-1    | ami-0182fe91a1bcfdf96 |
+| eu-west-2    | ami-0cdbe932b356da7b7 |
+| eu-central-1 | ami-0ab4d825b73e30d56 |
+| us-east-1    | ami-0ee46264e2e676521 |
+| us-east-2    | ami-062a21099569f9137 |
+| us-west-1    | ami-01e33c563b099067c |
 
 **To start the installation, execute:**
 
@@ -58,7 +57,7 @@ The whole process takes around forty minutes. In the end, the following resource
 
 ## Verify the installation
 
-First, check that gitpod components are running.
+First, check that Gitpod components are running.
 
 ```shell
 kubectl get pods
@@ -103,24 +102,15 @@ It should display the gitpod login page similar to the next image.
 
 ## Update Gitpod auth providers
 
-Please check the [Oauth providers integration documentation](https://www.gitpod.io/docs/self-hosted/0.5.0/install/oauth) expected format.
-We provide an [example here](./auth-providers-patch.yaml)
+Please check the [OAuth providers integration documentation](https://www.gitpod.io/docs/self-hosted/0.5.0/install/oauth) expected format.
 
-Update the configuration running
+We provide an [example here](./auth-providers-patch.yaml). Fill it with your OAuth providers data.
 
-```shell
-kubectl patch configmap auth-providers-config \
-  --type merge \
-  --patch "$(cat auth-providers-patch.yaml)"
+```console
+make auth
 ```
 
-and restart the `server` component with
-
-```shell
-kubectl rollout restart deployment/server
-```
-
-> We are aware of the limitation of this approach, and we are working to improve the helm chart to avoid this manual step.
+> We are aware of the limitation of this approach, and we are working to improve the helm chart to avoid this step.
 
 ## Destroy the cluster and AWS resources
 
