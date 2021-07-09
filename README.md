@@ -122,6 +122,5 @@ make uninstall
 
 > The command asks for a confirmation:
 > `Are you sure you want to delete: Gitpod, Services/Registry, Services/RDS, Services, Addons, Setup (y/n)?`
->
-> By default CDK creates a local file [cdk.context.json](https://docs.aws.amazon.com/cdk/latest/guide/context.html) as a cache of values retrieved from your AWS account.
-> Please make sure you delete the file after you run the uninstall command.
+
+> Please make sure you delete the S3 bucket used to store the docker registry images!
