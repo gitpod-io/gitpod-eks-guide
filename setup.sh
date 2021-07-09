@@ -190,6 +190,21 @@ function uninstall() {
     fi
 }
 
+function auth() {
+    AUTHPROVIDERS_CONFIG=${1:="auth-providers-patch.yaml"}
+    if [ ! -f "${AUTHPROVIDERS_CONFIG}" ]; then
+        echo "The auth provider configuration file ${AUTHPROVIDERS_CONFIG} does not exist."
+        exit 1
+    else
+        echo "Using the auth providers configuration file: ${AUTHPROVIDERS_CONFIG}"
+    fi
+
+    # Patching the configuration with the user auth provider/s
+    kubectl --kubeconfig .kubeconfig patch configmap auth-providers-config --type merge --patch "$(cat ${AUTHPROVIDERS_CONFIG})"
+    # Restart the server component
+    kubectl --kubeconfig .kubeconfig rollout restart deployment/server
+}
+
 function main() {
     if [[ $# -ne 1 ]]; then
         echo "Usage: $0 [--install|--uninstall]"
@@ -202,6 +217,9 @@ function main() {
         ;;
         '--uninstall')
             uninstall "eks-cluster.yaml"
+        ;;
+        '--auth')
+            auth "auth-providers-patch.yaml"
         ;;
         *)
             echo "Unknown command: $1"
