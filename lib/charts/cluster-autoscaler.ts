@@ -33,8 +33,8 @@ export class ClusterAutoscaler extends cdk.Construct {
                     'skip-nodes-with-local-storage': false,
                     'scale-down-utilization-threshold': 0.3,
                     'skip-nodes-with-system-pods': false,
-                    'cordon-node-before-terminating': true,
                     'expander': 'least-waste',
+                    // 'cordon-node-before-terminating': true,
                 }
             },
         });
