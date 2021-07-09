@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -eo pipefail
 
 function variables_from_context() {
     # Create EKS cluster without nodes
@@ -11,11 +11,7 @@ function variables_from_context() {
     CLUSTER_NAME=$(yq eval '.metadata.name' "${EKSCTL_CONFIG}")
     AWS_REGION=$(yq eval '.metadata.region' "${EKSCTL_CONFIG}")
 
-    ACCOUNT_ID=$("${AWS_CMD}" sts get-caller-identity | jq -r .Account)
-
-    if [ -z "${CONTAINER_REGISTRY_BUCKET}" ]; then
-        CONTAINER_REGISTRY_BUCKET="container-registry-${CLUSTER_NAME}-${ACCOUNT_ID}"
-    fi
+    ACCOUNT_ID=$(${AWS_CMD} sts get-caller-identity | jq -r .Account)
 
     CREATE_S3_BUCKET="false"
     if "${AWS_CMD}" s3api head-bucket --bucket "${CONTAINER_REGISTRY_BUCKET}" 2>/dev/null; then
@@ -64,6 +60,10 @@ function check_prerequisites() {
         echo "Please configure the CNAME with the URL of the load balancer manually."
     else
         echo "Using external-dns. No manual intervention required."
+    fi
+
+    if [ -z "${CONTAINER_REGISTRY_BUCKET}" ]; then
+        CONTAINER_REGISTRY_BUCKET="container-registry-${CLUSTER_NAME}-${ACCOUNT_ID}"
     fi
 }
 
