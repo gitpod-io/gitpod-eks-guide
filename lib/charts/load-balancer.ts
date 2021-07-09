@@ -17,7 +17,6 @@ export class AWSLoadBalancerController extends cdk.Construct {
             version: '1.2.3',
             wait: true,
             values: {
-                watchNamespace: 'default',
                 hostNetwork: true,
                 clusterName: cluster.clusterName,
                 serviceAccount: {
