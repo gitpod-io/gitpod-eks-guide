@@ -201,10 +201,9 @@ components:
     enableLocalApp: false
     enableOAuthServer: true
     # TODO: allow custom values
-    blockNewUsers: true
-    blockNewUsersPasslist:
-    - gitpod.io
-    makeNewUsersAdmin: true
+    blockNewUsers: false
+    blockNewUsersPasslist: []
+    makeNewUsersAdmin: false
     sessionMaxAgeMs: "28800000"   # 8 hours
     defaultBaseImageRegistryWhitelist:
     - "https://index.docker.io/v1/"
