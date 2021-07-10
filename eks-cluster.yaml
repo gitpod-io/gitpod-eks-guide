@@ -59,7 +59,7 @@ privateCluster:
   - "autoscaling"
   - "logs"
 
-nodeGroups:
+managedNodeGroups:
   - name: workspaces
     desiredCapacity: 1
     minSize: 1
@@ -78,28 +78,10 @@ nodeGroups:
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
     ami: ami-0ea449d16eb31a003
-    amiFamily: Ubuntu2004
-    asgMetricsCollection: &asgMetricsCollection
-      - granularity: 1Minute
-        metrics:
-          - GroupMinSize
-          - GroupMaxSize
-          - GroupDesiredCapacity
-          - GroupInServiceInstances
-          - GroupPendingInstances
-          - GroupStandbyInstances
-          - GroupTerminatingInstances
-          - GroupTotalInstances
-    ssh:
-      enableSsm: true
-    taints:
-      dedicated: workspaces:NoSchedule
     tags:
       # EC2 tags required for cluster-autoscaler auto-discovery
       k8s.io/cluster-autoscaler/enabled: "true"
       k8s.io/cluster-autoscaler/gitpod: "owned"
-      k8s.io/cluster-autoscaler/node-template/label/lifecycle: OnDemand
-      k8s.io/cluster-autoscaler/node-template/label/aws.amazon.com/spot: "true"
       k8s.io/cluster-autoscaler/node-template/label/purpose: workspaces
       k8s.io/cluster-autoscaler/node-template/taint/dedicated: "workspaces:NoSchedule"
     iam:
@@ -120,17 +102,11 @@ nodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
-      export AMI=ami-0ea449d16eb31a003
       export CLUSTERNAME=gitpod
       export NODEGROUP=workspaces
 
       declare -a LABELS=(
-        alpha.eksctl.io/cluster-name="${CLUSTERNAME}"
-        alpha.eksctl.io/nodegroup-name="${NODEGROUP}"
-        eks.amazonaws.com/capacityType=ON_DEMAND
         eks.amazonaws.com/nodegroup="${NODEGROUP}"
-        eks.amazonaws.com/nodegroup-image="${AMI}"
-        alpha.eksctl.io/nodegroup-type=unmanaged
         purpose="${NODEGROUP}"
       )
 
@@ -138,15 +114,10 @@ nodeGroups:
       export KUBELET_EXTRA_ARGS="$(printf -- "--max-pods=110 --node-labels=%s" $(IFS=$','; echo "${LABELS[*]}"))"
       /etc/eks/bootstrap.sh ${CLUSTERNAME}
 
-    # disabled when using spot instances
-    #instanceType: r5n.xlarge
-    # Spot instances documentation https://eksctl.io/usage/spot-instances/
-    instancesDistribution:
-      instanceTypes: ["r5n.xlarge","r5n.2xlarge"]
-      maxPrice: 0.15
-      onDemandBaseCapacity: 0
-      onDemandPercentageAboveBaseCapacity: 0
-      spotInstancePools: 1
+    instanceTypes: [r5n.xlarge, r5n.2xlarge]
+    # Create a spot nodegroup
+    # Please change to false for production
+    spot: true
 
   - name: services
     desiredCapacity: 1
@@ -166,20 +137,11 @@ nodeGroups:
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
     ami: ami-0ea449d16eb31a003
-    amiFamily: Ubuntu2004
-    asgMetricsCollection: *asgMetricsCollection
-    ssh:
-      enableSsm: true
-    #taints:
-    #  dedicated: services:NoSchedule
     tags:
       # EC2 tags required for cluster-autoscaler auto-discovery
       k8s.io/cluster-autoscaler/enabled: "true"
       k8s.io/cluster-autoscaler/gitpod: "owned"
-      k8s.io/cluster-autoscaler/node-template/label/lifecycle: OnDemand
-      k8s.io/cluster-autoscaler/node-template/label/aws.amazon.com/spot: "true"
       k8s.io/cluster-autoscaler/node-template/label/purpose: services
-      #k8s.io/cluster-autoscaler/node-template/taint/dedicated: "services:NoSchedule"
     iam:
       attachPolicyARNs: *attachPolicyARNs
       withAddonPolicies: *withAddonPolicies
@@ -188,17 +150,11 @@ nodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
-      export AMI=ami-0ea449d16eb31a003
       export CLUSTERNAME=gitpod
       export NODEGROUP=services
 
       declare -a LABELS=(
-        alpha.eksctl.io/cluster-name="${CLUSTERNAME}"
-        alpha.eksctl.io/nodegroup-name="${NODEGROUP}"
-        eks.amazonaws.com/capacityType=ON_DEMAND
         eks.amazonaws.com/nodegroup="${NODEGROUP}"
-        eks.amazonaws.com/nodegroup-image="${AMI}"
-        alpha.eksctl.io/nodegroup-type=unmanaged
         purpose="${NODEGROUP}"
       )
 
@@ -206,12 +162,7 @@ nodeGroups:
       export KUBELET_EXTRA_ARGS="$(printf -- "--max-pods=110 --node-labels=%s" $(IFS=$','; echo "${LABELS[*]}"))"
       /etc/eks/bootstrap.sh ${CLUSTERNAME}
 
-    # disabled when using spot instances
-    # instanceType: r5n.xlarge
-    # Spot instances documentation https://eksctl.io/usage/spot-instances/
-    instancesDistribution:
-      maxPrice: 0.15
-      instanceTypes: ["r5n.xlarge","r5n.2xlarge"]
-      onDemandBaseCapacity: 0
-      onDemandPercentageAboveBaseCapacity: 0
-      spotInstancePools: 1
+    instanceTypes: [r5n.xlarge, r5n.2xlarge]
+    # Create a spot nodegroup
+    # Please change to false for production
+    spot: true
