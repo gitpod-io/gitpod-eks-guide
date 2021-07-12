@@ -29,13 +29,13 @@ jobs:
 
       - name: Export tgz
         run: |
-          docker save ghcr.io/${{ github.repository }}:latest > gitpod-eks-guide.tar
+          docker save ghcr.io/${{ github.repository }}:latest | gzip > gitpod-eks-guide.tgz
 
       - name: Release
         uses: ncipollo/release-action@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          artifacts: gitpod-eks-guide.tar
+          artifacts: gitpod-eks-guide.tgz
           allowUpdates: true
           artifactErrorsFailBuild: true
           token: ${{ secrets.GITHUB_TOKEN }}

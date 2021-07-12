@@ -31,9 +31,11 @@ WORKDIR /gitpod
 COPY package.json /gitpod/
 COPY yarn.lock /gitpod/
 
-RUN yarn --pure-lockfile --non-interactive
+RUN yarn --pure-lockfile --non-interactive \
+  && rm -rf /usr/local/share/.cache/yarn
 
-RUN yarn global add aws-cdk npx
+RUN yarn global add aws-cdk npx \
+  && rm -rf /usr/local/share/.cache/yarn
 
 COPY . /gitpod
 
