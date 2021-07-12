@@ -36,5 +36,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           artifacts: gitpod-eks-guide.tar
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          artifactErrorsFailBuild: true
+          token: ${{ secrets.GITHUB_TOKEN }}
