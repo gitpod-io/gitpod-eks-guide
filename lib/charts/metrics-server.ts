@@ -13,12 +13,16 @@ export class MetricsServer extends cdk.Construct {
             release: 'metrics-server',
             repository: 'https://charts.bitnami.com/bitnami',
             namespace: 'kube-system',
-            version: '5.8.13',
+            version: '5.8.15',
             wait: true,
             values: {
                 hostNetwork: true,
                 apiService: {
                     create: true
+                },
+                extraArgs: {
+                    'v': '2',
+                    'kubelet-preferred-address-types': 'InternalIP, ExternalIP, Hostname'
                 }
             },
         });
