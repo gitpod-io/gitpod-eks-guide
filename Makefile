@@ -3,7 +3,7 @@
 # set default shell
 SHELL=/bin/bash -o pipefail -o errexit
 
-IMG=gitpod-eks
+IMG=ghcr.io/gitpod-io/gitpod-eks-guide:latest
 
 build: ## Build docker image containing the required tools for the installation
 	@docker build --quiet . -t ${IMG}
