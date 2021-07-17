@@ -50,7 +50,7 @@ export class ExternalDNS extends cdk.Construct {
                     runAsUser: 0
                 },
                 logFormat: 'json',
-                domainFilters: [process.env.DOMAIN],
+                domainFilters: [],
                 sources: ["ingress"],
                 policy: "upsert-only",
                 serviceAccount: {
