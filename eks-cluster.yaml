@@ -56,20 +56,20 @@ cloudWatch:
 privateCluster:
   enabled: false
   additionalEndpointServices:
-  - "autoscaling"
-  - "logs"
+    - "autoscaling"
+    - "logs"
 
 managedNodeGroups:
   - name: workspaces
     desiredCapacity: 1
     minSize: 1
-    maxSize: 3
+    maxSize: 10
     # because of AWS addons
     disableIMDSv1: false
     # Please configure the size of the volume and additional features
     # https://eksctl.io/usage/schema/#nodeGroups-volumeType
     # https://aws.amazon.com/es/ebs/pricing/
-    volumeSize: 100
+    volumeSize: 300
     volumeType: gp3
     volumeIOPS: 6000
     volumeThroughput: 500
@@ -77,13 +77,12 @@ managedNodeGroups:
     # Use private subnets for nodes
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-0ea449d16eb31a003
+    ami: ami-0a5735f238643d4c5
+
     tags:
       # EC2 tags required for cluster-autoscaler auto-discovery
       k8s.io/cluster-autoscaler/enabled: "true"
       k8s.io/cluster-autoscaler/gitpod: "owned"
-      k8s.io/cluster-autoscaler/node-template/label/purpose: workspaces
-      k8s.io/cluster-autoscaler/node-template/taint/dedicated: "workspaces:NoSchedule"
     iam:
       attachPolicyARNs: &attachPolicyARNs
         - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
@@ -107,17 +106,19 @@ managedNodeGroups:
 
       declare -a LABELS=(
         eks.amazonaws.com/nodegroup="${NODEGROUP}"
-        purpose="${NODEGROUP}"
+        gitpod.io/workload_workspaces=true
       )
 
-      export USE_MAX_PODS=false
       export KUBELET_EXTRA_ARGS="$(printf -- "--max-pods=110 --node-labels=%s" $(IFS=$','; echo "${LABELS[*]}"))"
       /etc/eks/bootstrap.sh ${CLUSTERNAME}
 
-    instanceTypes: [r5n.xlarge, r5n.2xlarge]
-    # Create a spot nodegroup
-    # Please change to false for production
-    spot: true
+    spot: false
+    # https://eksctl.io/usage/instance-selector/
+    #instanceSelector:
+    #  vCPUs: 8
+    #  memory: 64Gib
+    # or use a custom list
+    instanceTypes: ["r5.2xlarge", "r5.4xlarge"]
 
   - name: services
     desiredCapacity: 1
@@ -136,12 +137,12 @@ managedNodeGroups:
     # Use private subnets for nodes
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-0ea449d16eb31a003
+    ami: ami-0a5735f238643d4c5
+
     tags:
       # EC2 tags required for cluster-autoscaler auto-discovery
       k8s.io/cluster-autoscaler/enabled: "true"
       k8s.io/cluster-autoscaler/gitpod: "owned"
-      k8s.io/cluster-autoscaler/node-template/label/purpose: services
     iam:
       attachPolicyARNs: *attachPolicyARNs
       withAddonPolicies: *withAddonPolicies
@@ -155,14 +156,16 @@ managedNodeGroups:
 
       declare -a LABELS=(
         eks.amazonaws.com/nodegroup="${NODEGROUP}"
-        purpose="${NODEGROUP}"
+        gitpod.io/workload_services=true
       )
 
-      export USE_MAX_PODS=false
       export KUBELET_EXTRA_ARGS="$(printf -- "--max-pods=110 --node-labels=%s" $(IFS=$','; echo "${LABELS[*]}"))"
       /etc/eks/bootstrap.sh ${CLUSTERNAME}
 
-    instanceTypes: [r5n.xlarge, r5n.2xlarge]
-    # Create a spot nodegroup
-    # Please change to false for production
-    spot: true
+    spot: false
+    # https://eksctl.io/usage/instance-selector/
+    #instanceSelector:
+    #  vCPUs: 4
+    #  memory: 16Gib
+    # or use a custom list
+    instanceTypes: ["r5.xlarge", "r5.2xlarge"]
