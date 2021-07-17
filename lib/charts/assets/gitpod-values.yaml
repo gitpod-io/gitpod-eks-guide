@@ -43,12 +43,13 @@ affinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       nodeSelectorTerms:
       - matchExpressions:
-        - key: purpose
+        - key: gitpod.io/workload_services
           operator: In
           values:
-          - services
+          - "true"
 
 db:
+  enabled: true
   host: "{{mysqlHostname}}"
   port: "{{mysqlPort}}"
   password: "{{mysqlPassword}}"
@@ -131,10 +132,10 @@ rabbitmq:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
         - matchExpressions:
-          - key: purpose
+          - key: gitpod.io/workload_services
             operator: In
             values:
-            - services
+            - "true"
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
       - podAffinityTerm:
@@ -188,10 +189,10 @@ components:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
           - matchExpressions:
-            - key: purpose
+            - key: gitpod.io/workload_workspaces
               operator: In
               values:
-              - workspaces
+              - "true"
   server:
     defaultFeatureFlags: [] # ["full_workspace_backup"]
     imageName: server
@@ -218,9 +219,9 @@ components:
 
   workspace:
     affinity:
-      default: workspaces
-    supervisor:
-      imageName: supervisor
+      prebuild: "gitpod.io/workload_workspaces"
+      probe: "gitpod.io/workload_workspaces"
+      default: "gitpod.io/workload_workspaces"
     templates:
       default:
         spec:
@@ -286,10 +287,10 @@ components:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
           - matchExpressions:
-            - key: purpose
+            - key: gitpod.io/workload_workspaces
               operator: In
               values:
-              - workspaces
+              - "true"
 
   contentService:
     name: content-service
@@ -335,10 +336,10 @@ components:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
           - matchExpressions:
-            - key: purpose
+            - key: gitpod.io/workload_services
               operator: In
               values:
-              - services
+              - "true"
       podAntiAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
         - podAffinityTerm:
@@ -348,7 +349,7 @@ components:
                 operator: In
                 values:
                 - ws-proxy
-            topologyKey: services
+            topologyKey: "kubernetes.io/hostname"
           weight: 100
 
 # configure default log level
