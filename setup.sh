@@ -88,6 +88,8 @@ function install() {
     if ! eksctl get cluster "${CLUSTER_NAME}" > /dev/null 2>&1; then
         # https://eksctl.io/usage/managing-nodegroups/
         eksctl create cluster --config-file "${EKSCTL_CONFIG}" --without-nodegroup --kubeconfig ${KUBECONFIG}
+    else
+        eksctl utils write-kubeconfig --cluster "${CLUSTER_NAME}"
     fi
 
     # Disable default AWS CNI provider.
