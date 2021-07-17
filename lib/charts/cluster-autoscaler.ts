@@ -30,11 +30,13 @@ export class ClusterAutoscaler extends cdk.Construct {
                 extraArgs: {
                     'stderrthreshold': 'info',
                     'v': 2,
+                    'scale-down-utilization-threshold': 0.2,
                     'skip-nodes-with-local-storage': false,
-                    'scale-down-utilization-threshold': 0.3,
                     'skip-nodes-with-system-pods': false,
                     'expander': 'least-waste',
-                    // 'cordon-node-before-terminating': true,
+                    'balance-similar-node-groups': true,
+                    'node-group-auto-discovery': `asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/${cluster.clusterName}`,
+                    //TODO: enable after next release 'cordon-node-before-terminating': true,
                 }
             },
         });
