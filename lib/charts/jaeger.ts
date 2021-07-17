@@ -29,9 +29,9 @@ export class Jaeger extends cdk.Construct {
                                 {
                                     "matchExpressions": [
                                         {
-                                            "key": "purpose",
+                                            "key": "gitpod.io/workload_services",
                                             "operator": "In",
-                                            "values": ["services"]
+                                            "values": ["true"]
                                         }
                                     ]
                                 }
