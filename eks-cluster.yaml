@@ -77,7 +77,7 @@ managedNodeGroups:
     # Use private subnets for nodes
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-0a5735f238643d4c5
+    ami: ami-0efa0bd88898c121e
 
     tags:
       # EC2 tags required for cluster-autoscaler auto-discovery
@@ -100,6 +100,9 @@ managedNodeGroups:
     # to ensure that nodes are able to join the cluster https://eksctl.io/usage/custom-ami-support/
     overrideBootstrapCommand: |
       #!/bin/bash
+
+      # preload container images
+      gunzip -c /airgap-images.tar.gz | nerdctl --namespace k8s.io load
 
       export CLUSTERNAME=gitpod
       export NODEGROUP=workspaces
@@ -137,7 +140,7 @@ managedNodeGroups:
     # Use private subnets for nodes
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-0a5735f238643d4c5
+    ami: ami-0efa0bd88898c121e
 
     tags:
       # EC2 tags required for cluster-autoscaler auto-discovery
@@ -150,6 +153,9 @@ managedNodeGroups:
     # to ensure that nodes are able to join the cluster https://eksctl.io/usage/custom-ami-support/
     overrideBootstrapCommand: |
       #!/bin/bash
+
+      # preload container images
+      gunzip -c /airgap-images.tar.gz | nerdctl --namespace k8s.io load
 
       export CLUSTERNAME=gitpod
       export NODEGROUP=services
