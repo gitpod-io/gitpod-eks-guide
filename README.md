@@ -1,4 +1,4 @@
-# Running Gitpod in [Amazon EKS](https://aws.amazon.com/es/eks/)
+# Running Gitpod in [Amazon EKS](https://aws.amazon.com/en/eks/)
 
 ## Provision an EKS cluster
 
@@ -6,7 +6,7 @@ Before starting the installation process, you need:
 
 - An AWS account with Administrator access
   - [Create one now by clicking here](https://aws.amazon.com/getting-started/)
-- A SSL Certificate created with [AWS Certificate Manager](https://aws.amazon.com/es/certificate-manager/)
+- A SSL Certificate created with [AWS Certificate Manager](https://aws.amazon.com/en/certificate-manager/)
 - AWS credentials set up. By default, those configs are present in `$HOME/.aws/`.
 - [eksctl](https://eksctl.io/) config file describing the cluster.
   - Here is an [eks-cluster.yaml](eks-cluster.yaml) you can use as example.
