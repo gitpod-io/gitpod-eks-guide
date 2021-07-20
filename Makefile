@@ -17,15 +17,15 @@ DOCKER_RUN_CMD = docker run -it \
 	--volume ${HOME}/.aws:/root/.aws \
 	${IMG} $(1)
 
-install: build ## Install Gitpod
+install: ## Install Gitpod
 	@echo "Starting install process..."
 	@$(call DOCKER_RUN_CMD, --install)
 
-uninstall: build ## Uninstall Gitpod
+uninstall: ## Uninstall Gitpod
 	@echo "Starting uninstall process..."
 	@$(call DOCKER_RUN_CMD, --uninstall)
 
-auth: build ## Install OAuth providers
+auth: ## Install OAuth providers
 	@echo "Installing auth providers..."
 	@$(call DOCKER_RUN_CMD, --auth)
 
