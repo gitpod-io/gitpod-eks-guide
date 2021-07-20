@@ -13,6 +13,7 @@ DOCKER_RUN_CMD = docker run -it \
 	--env-file ${PWD}/.env \
 	--env NODE_ENV=production \
 	--volume ${PWD}/.kubeconfig:/gitpod/.kubeconfig \
+	--volume ${PWD}/eks-cluster.yaml:/gitpod/eks-cluster.yaml \
 	--volume ${PWD}/logs:/root/.npm/_logs \
 	--volume ${HOME}/.aws:/root/.aws \
 	${IMG} $(1)

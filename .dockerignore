@@ -7,3 +7,5 @@ gitpod-values.yaml
 gitpod-ingress.yaml
 
 .kubeconfig*
+
+eks-cluster.yaml
