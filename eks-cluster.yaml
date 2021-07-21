@@ -77,7 +77,7 @@ managedNodeGroups:
     # Use private subnets for nodes
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-0efa0bd88898c121e
+    ami: ami-07fb3686456a200ad
 
     tags:
       # EC2 tags required for cluster-autoscaler auto-discovery
@@ -140,7 +140,7 @@ managedNodeGroups:
     # Use private subnets for nodes
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-0efa0bd88898c121e
+    ami: ami-07fb3686456a200ad
 
     tags:
       # EC2 tags required for cluster-autoscaler auto-discovery
