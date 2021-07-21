@@ -10,7 +10,7 @@ certificatesSecret:
   secretName: proxy-config-certificates
 
 installPodSecurityPolicies: true
-imagePullPolicy: Always
+imagePullPolicy: IfNotPresent
 
 resources:
   default:
