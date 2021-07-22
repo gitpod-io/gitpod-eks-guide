@@ -77,7 +77,7 @@ managedNodeGroups:
     # Use private subnets for nodes
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-07fb3686456a200ad
+    ami: ami-0e70601f0ddfd0d97
 
     tags:
       # EC2 tags required for cluster-autoscaler auto-discovery
@@ -101,9 +101,6 @@ managedNodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
 
-      # preload container images
-      gunzip -c /airgap-images.tar.gz | nerdctl --namespace k8s.io load
-
       export CLUSTERNAME=gitpod
       export NODEGROUP=workspaces
 
@@ -121,7 +118,7 @@ managedNodeGroups:
     #  vCPUs: 8
     #  memory: 64Gib
     # or use a custom list
-    instanceTypes: ["r5.2xlarge", "r5.4xlarge"]
+    instanceTypes: ["r5.xlarge", "r5.2xlarge"]
 
   - name: services
     desiredCapacity: 1
@@ -140,7 +137,7 @@ managedNodeGroups:
     # Use private subnets for nodes
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-07fb3686456a200ad
+    ami: ami-0e70601f0ddfd0d97
 
     tags:
       # EC2 tags required for cluster-autoscaler auto-discovery
@@ -153,9 +150,6 @@ managedNodeGroups:
     # to ensure that nodes are able to join the cluster https://eksctl.io/usage/custom-ami-support/
     overrideBootstrapCommand: |
       #!/bin/bash
-
-      # preload container images
-      gunzip -c /airgap-images.tar.gz | nerdctl --namespace k8s.io load
 
       export CLUSTERNAME=gitpod
       export NODEGROUP=services
