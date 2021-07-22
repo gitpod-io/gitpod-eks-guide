@@ -240,23 +240,6 @@ components:
                   cpu: 1m
                   ephemeral-storage: 5Gi
                   memory: 4608Mi # = 2 * 2304Mi
-      imagebuild:
-        spec:
-          #dnsConfig:
-          #  nameservers:
-          #    - 10.100.0.10
-          #dnsPolicy: Default
-          containers:
-            - name: workspace
-              # Intended to reduce the density for prebuilds
-              resources:
-                limits:
-                  cpu: "5"
-                  memory: 12Gi
-                requests:
-                  cpu: 1m
-                  ephemeral-storage: 5Gi
-                  memory: 4608Mi # = 2 * 2304Mi
 
   proxy:
     replicas: 2
