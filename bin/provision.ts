@@ -7,6 +7,7 @@ import { ServicesStack } from '../lib/services';
 import { AddonsStack } from '../lib/addons';
 import { GitpodStack } from '../lib/gitpod';
 import { SetupStack } from '../lib/setup';
+import * as iam from '@aws-cdk/aws-iam';
 
 const app = new cdk.App({});
 
@@ -44,6 +45,16 @@ const addons = new AddonsStack(app, 'Addons', {
   env,
 });
 addons.node.addDependency(setup);
+
+if (process.env.PERMISSIONS_BOUNDARY_ARN) {
+  const boundary = iam.ManagedPolicy.fromManagedPolicyArn(
+    app,
+    "GitpodBoundary",
+    `${process.env.PERMISSIONS_BOUNDARY_ARN}`,
+  );
+
+  iam.PermissionsBoundary.of(addons).apply(boundary);
+}
 
 const services = new ServicesStack(app, 'Services', {
   env,
