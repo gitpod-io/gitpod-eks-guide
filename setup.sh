@@ -100,6 +100,13 @@ function install() {
     # Install Calico.
     kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
 
+    # Create secret with container registry credentials
+    if [ -n "${IMAGE_PULL_SECRET_FILE}" ] && [ -f "${IMAGE_PULL_SECRET_FILE}" ]; then
+        kubectl create secret generic gitpod-image-pull-secret \
+            --from-file=.dockerconfigjson="${IMAGE_PULL_SECRET_FILE}" \
+            --type=kubernetes.io/dockerconfigjson  >/dev/null 2>&1 || true
+    fi
+
     if ${AWS_CMD} iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" > /dev/null 2>&1; then
         KUBECTL_ROLE_ARN=$(${AWS_CMD} iam get-role --role-name "${CLUSTER_NAME}-region-${AWS_REGION}-role-eksadmin" | jq -r .Role.Arn)
     else
