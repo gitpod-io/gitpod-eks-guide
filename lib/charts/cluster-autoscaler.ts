@@ -16,7 +16,7 @@ export class ClusterAutoscaler extends cdk.Construct {
             release: CLUSTER_AUTOSCALER,
             repository: 'https://kubernetes.github.io/autoscaler',
             namespace: 'kube-system',
-            version: '9.9.2',
+            version: '9.10.3',
             wait: true,
             values: {
                 autoDiscovery: {
@@ -27,6 +27,7 @@ export class ClusterAutoscaler extends cdk.Construct {
                     create: false,
                     name: CLUSTER_AUTOSCALER,
                 },
+                replicaCount: 1,
                 extraArgs: {
                     'stderrthreshold': 'info',
                     'v': 2,
@@ -36,7 +37,7 @@ export class ClusterAutoscaler extends cdk.Construct {
                     'expander': 'least-waste',
                     'balance-similar-node-groups': true,
                     'node-group-auto-discovery': `asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/${cluster.clusterName}`,
-                    //TODO: enable after next release 'cordon-node-before-terminating': true,
+                    'cordon-node-before-terminating': true,
                 }
             },
         });
