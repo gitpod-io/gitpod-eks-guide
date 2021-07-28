@@ -93,6 +93,10 @@ export class GitpodStack extends cdk.Stack {
             manifest.metadata.annotations["alb.ingress.kubernetes.io/scheme"] = 'internet-facing';
         }
 
+        if (process.env.ALB_SUBNETS) {
+            manifest.metadata.annotations["alb.ingress.kubernetes.io/subnets"] = `${process.env.ALB_SUBNETS}`;
+        }
+
         const gitpodIngress = new KubernetesManifest(this, "gitpod-ingress", {
             cluster,
             overwrite: true,
