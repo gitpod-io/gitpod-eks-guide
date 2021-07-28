@@ -18,7 +18,7 @@ var createNestedObject = function (base: any, names: any, value: any) {
 };
 
 // TODO: switch to official gitpod.io build.
-const version = "aledbf-mk3.29";
+const version = "aledbf-mk3.40";
 
 export interface GitpodProps extends cdk.StackProps {
     domain: string
@@ -54,11 +54,18 @@ export class GitpodStack extends cdk.Stack {
             replace(/{{issuerName}}/g, 'ca-issuer');
 
         const values = loadYaml(doc);
-        if (process.env.IMAGE_PULL_SECRET) {
-            createNestedObject(values, ["components", "workspace", "templates", "default", "spec", "imagePullSecrets"], []);
+        if (process.env.IMAGE_PULL_SECRET_FILE) {
             createNestedObject(values, ["components", "imageBuilderMk3", "registry"], {});
-            values.components.workspace.templates.default.spec.imagePullSecrets.push({ "name": `${process.env.IMAGE_PULL_SECRET}` });
-            values.components.imageBuilderMk3.registry.secretName = `${process.env.IMAGE_PULL_SECRET}`;
+            values.components.imageBuilderMk3.registry.secretName = "gitpod-image-pull-secret";
+        }
+
+        if (process.env.IMAGE_REGISTRY_WHITELIST) {
+            createNestedObject(values, ["components", "server", "defaultBaseImageRegistryWhitelist"], []);
+            process.env.IMAGE_REGISTRY_WHITELIST.split(',').forEach((registry: string) => {
+                values.components.server.defaultBaseImageRegistryWhitelist.push(registry);
+            });
+
+            values.components.server.defaultBaseImageRegistryWhitelist.push('https://index.docker.io/v1/');
         }
 
         const helmChart = cluster.addHelmChart('GitpodChart', {
@@ -66,7 +73,7 @@ export class GitpodStack extends cdk.Stack {
             release: 'gitpod',
             repository: 'https://aledbf.github.io/gitpod-chart-cleanup/',
             namespace: 'default',
-            version: '1.2.15',
+            version: '1.2.17',
             wait: true,
             values,
         });
