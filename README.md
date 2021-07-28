@@ -20,13 +20,13 @@ Please update the `ami` field in the [eks-cluster.yaml](eks-cluster.yaml) file w
 
 | Region       | AMI                   |
 | ------------ | --------------------- |
-| us-west-1    | ami-01395176fa1eb01d5 |
-| us-west-2    | ami-0caaf47ba5933e634 |
-| eu-west-1    | ami-0326129cb2b886811 |
-| eu-west-2    | ami-04e6042175e0d2d6d |
-| eu-central-1 | ami-0b0ec4e6ca9e9bcc8 |
-| us-east-1    | ami-036c96c896363b47b |
-| us-east-2    | ami-0209a4d29962f060c |
+| us-west-1    | ami-0b736a4ed3766b1ab |
+| us-west-2    | ami-0701fd62e0a405cb9 |
+| eu-west-1    | ami-0b569734c5cace173 |
+| eu-west-2    | ami-0916f2bcf7b1a227c |
+| eu-central-1 | ami-0466f34e61ecc4fa0 |
+| us-east-1    | ami-03b9dcae9e8873063 |
+| us-east-2    | ami-0f82a845775fde08f |
 
 **To start the installation, execute:**
 
