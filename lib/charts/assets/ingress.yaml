@@ -18,7 +18,6 @@ metadata:
     alb.ingress.kubernetes.io/target-node-labels: gitpod.io/workload_workspaces=true
     alb.ingress.kubernetes.io/healthcheck-protocol: HTTPS
     alb.ingress.kubernetes.io/backend-protocol: HTTPS
-    alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/listen-ports: >-
       [{
         "HTTP": 80

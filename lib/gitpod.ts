@@ -6,6 +6,17 @@ import { Database } from './database';
 import { Registry } from './registry';
 import { importCluster } from './charts/cluster-utils';
 
+var createNestedObject = function (base: any, names: any, value: any) {
+    var lastName = arguments.length === 3 ? names.pop() : false;
+    for (var i = 0; i < names.length; i++) {
+        base = base[names[i]] = base[names[i]] || {};
+    }
+
+    if (lastName) {
+        base = base[lastName] = value;
+    }
+};
+
 // TODO: switch to official gitpod.io build.
 const version = "aledbf-mk3.29";
 
@@ -42,14 +53,22 @@ export class GitpodStack extends cdk.Stack {
 
             replace(/{{issuerName}}/g, 'ca-issuer');
 
+        const values = loadYaml(doc);
+        if (process.env.IMAGE_PULL_SECRET) {
+            createNestedObject(values, ["components", "workspace", "templates", "default", "spec", "imagePullSecrets"], []);
+            createNestedObject(values, ["components", "imageBuilderMk3", "registry"], {});
+            values.components.workspace.templates.default.spec.imagePullSecrets.push({ "name": `${process.env.IMAGE_PULL_SECRET}` });
+            values.components.imageBuilderMk3.registry.secretName = `${process.env.IMAGE_PULL_SECRET}`;
+        }
+
         const helmChart = cluster.addHelmChart('GitpodChart', {
             chart: 'gitpod',
             release: 'gitpod',
             repository: 'https://aledbf.github.io/gitpod-chart-cleanup/',
             namespace: 'default',
-            version: '1.2.14',
+            version: '1.2.15',
             wait: true,
-            values: loadYaml(doc),
+            values,
         });
 
         doc = readYamlDocument(__dirname + '/charts/assets/ingress.yaml');
@@ -61,9 +80,17 @@ export class GitpodStack extends cdk.Stack {
             manifest.metadata.annotations["alb.ingress.kubernetes.io/ssl-policy"] = "ELBSecurityPolicy-FS-1-2-Res-2020-10";
         }
 
+        manifest.metadata.annotations["alb.ingress.kubernetes.io/load-balancer-name"] = `${process.env.CLUSTER_NAME}-${props.env?.region}`;
+
         // if we have a route53 zone ID, enable external-dns.
         if (process.env.ROUTE53_ZONEID) {
             manifest.metadata.annotations["external-dns.alpha.kubernetes.io/hostname"] = `${props.domain}, *.${props.domain}, *.ws.${props.domain}`;
+        }
+
+        if (process.env.USE_INTERNAL_ALB && process.env.USE_INTERNAL_ALB.toLowerCase() === 'true') {
+            manifest.metadata.annotations["alb.ingress.kubernetes.io/scheme"] = 'internal';
+        } else {
+            manifest.metadata.annotations["alb.ingress.kubernetes.io/scheme"] = 'internet-facing';
         }
 
         const gitpodIngress = new KubernetesManifest(this, "gitpod-ingress", {
