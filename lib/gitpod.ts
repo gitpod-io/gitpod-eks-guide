@@ -18,7 +18,7 @@ var createNestedObject = function (base: any, names: any, value: any) {
 };
 
 // TODO: switch to official gitpod.io build.
-const version = "aledbf-mk3.54";
+const version = "aledbf-mk3.55";
 
 export interface GitpodProps extends cdk.StackProps {
     domain: string
@@ -73,7 +73,7 @@ export class GitpodStack extends cdk.Stack {
             release: 'gitpod',
             repository: 'https://aledbf.github.io/gitpod-chart-cleanup/',
             namespace: 'default',
-            version: '1.3.0',
+            version: '1.3.1',
             wait: true,
             values,
         });
