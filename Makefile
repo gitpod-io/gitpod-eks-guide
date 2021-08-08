@@ -20,6 +20,7 @@ DOCKER_RUN_CMD = docker run -it \
 
 install: ## Install Gitpod
 	@echo "Starting install process..."
+	touch ${PWD}/.kubeconfig
 	@$(call DOCKER_RUN_CMD, --install)
 
 uninstall: ## Uninstall Gitpod
