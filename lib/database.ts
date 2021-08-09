@@ -3,6 +3,7 @@ import * as rds from '@aws-cdk/aws-rds';
 import * as cdk from '@aws-cdk/core';
 import { SecretValue } from '@aws-cdk/core';
 import * as ssm from '@aws-cdk/aws-ssm';
+import { ParameterGroup } from '@aws-cdk/aws-rds';
 
 export interface DatabaseProps extends cdk.StackProps {
     readonly clusterName: string;
@@ -24,6 +25,15 @@ export class Database extends cdk.Stack {
 
     constructor(scope: cdk.Construct, id: string, props: DatabaseProps) {
         super(scope, id, props);
+
+        const parameterGroup = new rds.ParameterGroup(this, "DBParameterGroup", {
+            engine: props.instanceEngine ?? rds.DatabaseInstanceEngine.mysql({
+                version: rds.MysqlEngineVersion.VER_5_7,
+            }),
+            parameters: {
+                explicit_defaults_for_timestamp: "OFF"
+            }
+        });
 
         // TODO: remove when the gitpod helm chart supports using secrets from ssm
         this.credentials = ssm.StringParameter.valueForStringParameter(
@@ -49,6 +59,7 @@ export class Database extends cdk.Stack {
             databaseName: 'gitpod',
             autoMinorVersionUpgrade: false,
             deletionProtection: false,
+            parameterGroup
         });
 
         // allow internally from the same security group
