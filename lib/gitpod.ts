@@ -73,7 +73,7 @@ export class GitpodStack extends cdk.Stack {
             release: 'gitpod',
             repository: 'https://aledbf.github.io/gitpod-chart-cleanup/',
             namespace: 'default',
-            version: '1.3.1',
+            version: '1.3.2',
             wait: true,
             values,
         });
