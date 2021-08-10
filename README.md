@@ -35,13 +35,15 @@ Please update the `ami` field in the [eks-cluster.yaml](eks-cluster.yaml) file w
 make install
 ```
 
+**Important: DNS propagation can take several minutes until the configured domain is available!**
+
 The whole process takes around forty minutes. In the end, the following resources are created:
 
 - an EKS cluster running Kubernetes v1.20
 - Kubernetes nodes using a custom [AMI image](https://github.com/gitpod-io/amazon-eks-custom-amis/tree/gitpod):
   - Ubuntu 20.04
-  - Linux kernel v5.12
-  - containerd v1.54
+  - Linux kernel v5.13
+  - containerd v1.5.4
   - runc: v1.0.1
   - CNI plugins: v0.9.1
   - Stargz Snapshotter: v0.7.0
@@ -57,6 +59,7 @@ The whole process takes around forty minutes. In the end, the following resource
 - [Jaeger operator](https://github.com/jaegertracing/helm-charts/tree/main/charts/jaeger-operator) - and Jaeger deployment for gitpod distributed tracing
 - [metrics-server](https://github.com/kubernetes-sigs/metrics-server)
 - [gitpod.io](https://github.com/gitpod-io/gitpod) deployment
+- A public DNS zone managed by Route53 (if `ROUTE53_ZONEID` env variable is configured)
 
 ## Verify the installation
 
