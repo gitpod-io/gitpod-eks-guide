@@ -11,9 +11,8 @@ RUN apk add --no-cache \
     yq \
   && pip3 install --upgrade pip \
   && pip3 install \
-    awscli
-
-RUN aws --version
+    awscli \
+  && rm -rf /root/.cache
 
 RUN curl -fsSL https://github.com/mikefarah/yq/releases/download/v4.9.6/yq_linux_amd64 -o /usr/local/bin/yq \
   && chmod +x /usr/local/bin/yq
