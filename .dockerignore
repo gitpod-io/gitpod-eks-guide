@@ -9,3 +9,7 @@ gitpod-ingress.yaml
 .kubeconfig*
 
 eks-cluster.yaml
+
+.git
+.husky
+.github
