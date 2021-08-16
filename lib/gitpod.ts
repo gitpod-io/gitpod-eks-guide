@@ -18,7 +18,7 @@ var createNestedObject = function (base: any, names: any, value: any) {
 };
 
 // TODO: switch to official gitpod.io build.
-const version = "aledbf-mk3.56";
+const version = "aledbf-mk3.60";
 
 export interface GitpodProps extends cdk.StackProps {
     domain: string
