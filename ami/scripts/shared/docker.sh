@@ -40,10 +40,10 @@ blacklist sctp
 EOF
 
 # Configure grub
-echo "GRUB_GFXPAYLOAD_LINUX=keep" >> /etc/default/grub
+# echo "GRUB_GFXPAYLOAD_LINUX=keep" >> /etc/default/grub
 # Enable cgroups2
-sed -i 's/GRUB_CMDLINE_LINUX="\(.*\)"/GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=1 cgroup_no_v1=all \1"/g' /etc/default/grub
-update-grub2
+# sed -i 's/GRUB_CMDLINE_LINUX="\(.*\)"/GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=1 cgroup_no_v1=all \1"/g' /etc/default/grub
+# update-grub2
 
 # Install containerd
 curl -sSL https://github.com/containerd/nerdctl/releases/download/v0.11.1/nerdctl-full-0.11.1-linux-amd64.tar.gz -o - | tar -xz -C /usr/local
@@ -72,8 +72,8 @@ systemctl enable stargz-snapshotter
 systemctl start containerd
 
 # Prepare images airgap tgz
-#chmod +x /etc/packer/files/gitpod/airgap.sh
-#/etc/packer/files/gitpod/airgap.sh
+chmod +x /etc/packer/files/gitpod/airgap.sh
+/etc/packer/files/gitpod/airgap.sh
 
 sleep 60
 systemctl stop containerd
