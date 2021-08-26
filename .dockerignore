@@ -13,3 +13,5 @@ eks-cluster.yaml
 .git
 .husky
 .github
+
+config.json

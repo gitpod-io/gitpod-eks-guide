@@ -5,6 +5,12 @@ SHELL=/bin/bash -o pipefail -o errexit
 
 IMG=ghcr.io/gitpod-io/gitpod-eks-guide:latest
 
+# load .env file
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
+
 build: ## Build docker image containing the required tools for the installation
 	@docker build --quiet . -t ${IMG}
 	@mkdir -p ${PWD}/logs
@@ -13,6 +19,7 @@ DOCKER_RUN_CMD = docker run -it \
 	--env-file ${PWD}/.env \
 	--env NODE_ENV=production \
 	--volume ${PWD}/.kubeconfig:/gitpod/.kubeconfig \
+	--volume ${IMAGE_PULL_SECRET_FILE}:/gitpod/config.json \
 	--volume ${PWD}/eks-cluster.yaml:/gitpod/eks-cluster.yaml \
 	--volume ${PWD}/logs:/root/.npm/_logs \
 	--volume ${HOME}/.aws:/root/.aws \
