@@ -339,8 +339,8 @@ migrate_and_mount_disk() {
     local temp_path="/mnt${folder_path}"
     local old_path="${folder_path}-old"
 
-    # install an ext4 filesystem to the disk
-    mkfs -t ext4 ${disk_name}
+    # install an xfs filesystem to the disk
+    mkfs -t xfs ${disk_name}
 
     # check if the folder already exists
     if [ -d "${folder_path}" ]; then
@@ -355,7 +355,7 @@ migrate_and_mount_disk() {
     mkdir -p ${folder_path}
 
     # add the mount point to fstab and mount the disk
-    echo "UUID=$(blkid -s UUID -o value ${disk_name}) ${folder_path} ext4 ${mount_options} 0 1" >> /etc/fstab
+    echo "UUID=$(blkid -s UUID -o value "${disk_name}") ${folder_path} xfs ${mount_options} 0 1" >> /etc/fstab
     mount -a
 }
 
@@ -374,9 +374,9 @@ partition_disks() {
     local disk_name=$1
 
     # partition the disk
-    parted -a optimal -s $disk_name \
+    parted -a optimal -s "$disk_name" \
         mklabel gpt \
-        mkpart home ext4 0% 90%
+        mkpart home xfs 0% 90%
 
     # wait for the disks to settle
     sleep 5
