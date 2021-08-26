@@ -105,7 +105,9 @@ mkdir -p /var/lib/containerd/io.containerd.snapshotter.v1.stargz
 ################################################################################
 
 mkdir -p /etc/eks
-curl -sL -o /etc/eks/eni-max-pods.txt https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/files/eni-max-pods.txt
+# Temporal https://github.com/awslabs/amazon-eks-ami/pull/735
+curl -sL -o /etc/eks/eni-max-pods.txt https://raw.githubusercontent.com/awslabs/amazon-eks-ami/e9b681acc4ea08d22a82eb4388734a225d153561/files/eni-max-pods.txt
+# https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/files/eni-max-pods.txt
 
 cp /etc/packer/files/gitpod/bootstrap.sh /etc/eks/bootstrap.sh
 chown root:root /etc/eks/bootstrap.sh
