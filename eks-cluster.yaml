@@ -10,7 +10,7 @@ metadata:
   name: gitpod
   # Template, please change
   region: us-west-2
-  version: "1.20"
+  version: "1.21"
 
 iam:
   withOIDC: true
@@ -77,7 +77,7 @@ managedNodeGroups:
     # Use private subnets for nodes
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-0f2ff7608f3d887a2
+    ami: ami-01af14130131e7a3c
 
     tags:
       # EC2 tags required for cluster-autoscaler auto-discovery
@@ -118,7 +118,7 @@ managedNodeGroups:
     #  vCPUs: 8
     #  memory: 64Gib
     # or use a custom list
-    instanceTypes: ["r5.xlarge", "r5.2xlarge"]
+    instanceTypes: ["m6i.xlarge", "m6i.2xlarge"]
 
   - name: services
     desiredCapacity: 1
@@ -137,7 +137,7 @@ managedNodeGroups:
     # Use private subnets for nodes
     # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-0f2ff7608f3d887a2
+    ami: ami-01af14130131e7a3c
 
     tags:
       # EC2 tags required for cluster-autoscaler auto-discovery
@@ -168,4 +168,4 @@ managedNodeGroups:
     #  vCPUs: 4
     #  memory: 16Gib
     # or use a custom list
-    instanceTypes: ["r5.xlarge", "r5.2xlarge"]
+    instanceTypes: ["m6i.xlarge", "m6i.2xlarge"]
