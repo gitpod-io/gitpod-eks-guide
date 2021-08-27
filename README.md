@@ -20,13 +20,13 @@ Please update the `ami` field in the [eks-cluster.yaml](eks-cluster.yaml) file w
 
 | Region       | AMI                   |
 | ------------ | --------------------- |
-| us-west-1    | ami-0c94a575efb9bdefa |
-| us-west-2    | ami-0f2ff7608f3d887a2 |
-| eu-west-1    | ami-0ed829eab7f95f771 |
-| eu-west-2    | ami-00fab89ec63577fd5 |
-| eu-central-1 | ami-0ff1e9b7cf7b48808 |
-| us-east-1    | ami-01ac2c5dbcc82fd41 |
-| us-east-2    | ami-01a4fa78b79360b9d |
+| us-west-1    | ami-06c84b5625f8b9604 |
+| us-west-2    | ami-0a9aa973650d0c831 |
+| eu-west-1    | ami-0de99790cc9326e71 |
+| eu-west-2    | ami-0fea47c0b713f556a |
+| eu-central-1 | ami-037f1d445b7fce6d9 |
+| us-east-1    | ami-0cb54c9245b490884 |
+| us-east-2    | ami-0648e811b79d1c89a |
 
 
 **To start the installation, execute:**
@@ -39,11 +39,11 @@ make install
 
 The whole process takes around forty minutes. In the end, the following resources are created:
 
-- an EKS cluster running Kubernetes v1.20
+- an EKS cluster running Kubernetes v1.21
 - Kubernetes nodes using a custom [AMI image](https://github.com/gitpod-io/amazon-eks-custom-amis/tree/gitpod):
   - Ubuntu 20.04
   - Linux kernel v5.13
-  - containerd v1.5.4
+  - containerd v1.5.5
   - runc: v1.0.1
   - CNI plugins: v0.9.1
   - Stargz Snapshotter: v0.7.0
