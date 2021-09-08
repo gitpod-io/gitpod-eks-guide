@@ -53,9 +53,10 @@ export class GitpodStack extends cdk.Stack {
 
             replace(/{{issuerName}}/g, 'ca-issuer');
 
+
         const values = loadYaml(doc);
+        createNestedObject(values, ["components", "imageBuilderMk3", "registry"], {});
         if (process.env.IMAGE_PULL_SECRET_FILE) {
-            createNestedObject(values, ["components", "imageBuilderMk3", "registry"], {});
             values.components.imageBuilderMk3.registry.secretName = "gitpod-image-pull-secret";
         }
 

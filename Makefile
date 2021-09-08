@@ -11,15 +11,22 @@ ifneq (,$(wildcard ./.env))
     export
 endif
 
+ifneq ($(IMAGE_PULL_SECRET_FILE),)
+	IMAGE_PULL_SECRET=--volume $(shell realpath ${IMAGE_PULL_SECRET_FILE}):/gitpod/config.json
+else
+	IMAGE_PULL_SECRET=
+endif
+
 build: ## Build docker image containing the required tools for the installation
-	@docker build --quiet . -t ${IMG}
+	@docker build --squash --quiet . -t ${IMG}
 	@mkdir -p ${PWD}/logs
 
 DOCKER_RUN_CMD = docker run -it \
+	--pull always \
 	--env-file ${PWD}/.env \
 	--env NODE_ENV=production \
 	--volume ${PWD}/.kubeconfig:/gitpod/.kubeconfig \
-	--volume $(shell realpath ${IMAGE_PULL_SECRET_FILE}):/gitpod/config.json \
+	$(IMAGE_PULL_SECRET) \
 	--volume ${PWD}/eks-cluster.yaml:/gitpod/eks-cluster.yaml \
 	--volume ${PWD}/logs:/root/.npm/_logs \
 	--volume ${HOME}/.aws:/root/.aws \
@@ -27,7 +34,7 @@ DOCKER_RUN_CMD = docker run -it \
 
 install: ## Install Gitpod
 	@echo "Starting install process..."
-	touch ${PWD}/.kubeconfig
+	@touch ${PWD}/.kubeconfig
 	@$(call DOCKER_RUN_CMD, --install)
 
 uninstall: ## Uninstall Gitpod
