@@ -30,7 +30,7 @@ export class CertManager extends cdk.Construct {
         const helmChart = cluster.addHelmChart('CertManagerChart', {
             chart: 'cert-manager',
             release: 'cert-manager',
-            version: 'v1.4.0',
+            version: 'v1.6.0',
             repository: 'https://charts.jetstack.io/',
             namespace,
             createNamespace: false,
