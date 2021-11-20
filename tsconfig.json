@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2018",
+    "target": "ESNext",
     "module": "commonjs",
-    "lib": ["es2018"],
+    "lib": ["ESNext"],
+    "moduleResolution":"Node",
     "declaration": true,
     "strict": true,
     "noImplicitAny": true,
@@ -17,7 +18,14 @@
     "inlineSources": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
-    "typeRoots": ["./node_modules/@types"]
+    "typeRoots": ["./node_modules/@types"],
+    "esModuleInterop": true,
   },
-  "exclude": ["cdk.out"]
+  "exclude": ["cdk.out"],
+  "ts-node": {
+    "transpileOnly": true,
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  },
 }
