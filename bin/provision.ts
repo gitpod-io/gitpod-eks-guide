@@ -2,13 +2,13 @@
 
 import 'source-map-support/register';
 
-import * as cdk from '@aws-cdk/core';
+import { App } from '@aws-cdk/core';
 import { ServicesStack } from '../lib/services';
 import { AddonsStack } from '../lib/addons';
 import { GitpodStack } from '../lib/gitpod';
 import { SetupStack } from '../lib/setup';
 
-const app = new cdk.App({});
+const app = new App({});
 
 const region = app.node.tryGetContext('region');
 if (!region) {
@@ -54,9 +54,6 @@ const gitpod = new GitpodStack(app, 'Gitpod', {
   env,
   domain,
   certificateArn,
-
-  database: services.database,
-  registry: services.registry,
 })
 gitpod.node.addDependency(services);
 gitpod.node.addDependency(addons);

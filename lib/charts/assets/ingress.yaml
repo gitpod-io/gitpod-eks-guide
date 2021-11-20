@@ -15,7 +15,7 @@ metadata:
         }
       }
     alb.ingress.kubernetes.io/tags: Purpose=Gitpod,Service=proxy
-    alb.ingress.kubernetes.io/target-node-labels: gitpod.io/workload_workspaces=true
+    alb.ingress.kubernetes.io/target-node-labels: gitpod.io/workload_workspace_services=true
     alb.ingress.kubernetes.io/healthcheck-protocol: HTTPS
     alb.ingress.kubernetes.io/backend-protocol: HTTPS
     alb.ingress.kubernetes.io/listen-ports: >-
