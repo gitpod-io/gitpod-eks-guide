@@ -1,85 +1,34 @@
-import cdk = require('@aws-cdk/core');
+import {
+    Construct,
+    Stack,
+    StackProps,
+    Duration
+} from '@aws-cdk/core';
+import { NodejsFunction } from '@aws-cdk/aws-lambda-nodejs';
+
 import { KubernetesManifest } from '@aws-cdk/aws-eks';
 
 import { readYamlDocument, loadYaml } from './charts/utils';
-import { Database } from './database';
-import { Registry } from './registry';
+//import { Database } from './database';
+//import { Registry } from './registry';
 import { importCluster } from './charts/cluster-utils';
 
-var createNestedObject = function (base: any, names: any, value: any) {
-    var lastName = arguments.length === 3 ? names.pop() : false;
-    for (var i = 0; i < names.length; i++) {
-        base = base[names[i]] = base[names[i]] || {};
-    }
-
-    if (lastName) {
-        base = base[lastName] = value;
-    }
-};
-
-// TODO: switch to official gitpod.io build.
-const version = "aledbf-mk3.68";
-
-export interface GitpodProps extends cdk.StackProps {
+export interface GitpodProps extends StackProps {
     domain: string
 
     certificateArn?: string
 
-    database: Database
-    registry: Registry
+    //database: Database
+    //registry: Registry
 }
 
-export class GitpodStack extends cdk.Stack {
-    constructor(scope: cdk.Construct, id: string, props: GitpodProps) {
+export class GitpodStack extends Stack {
+    constructor(scope: Construct, id: string, props: GitpodProps) {
         super(scope, id, props);
 
         const cluster = importCluster(this, process.env.CLUSTER_NAME);
 
-        let doc = readYamlDocument(__dirname + '/charts/assets/gitpod-values.yaml');
-        doc = doc.
-            replace(/{{version}}/g, version).
-
-            replace(/{{domain}}/g, props.domain).
-
-            replace(/{{region}}/g, props.env?.region || 'us-west-2').
-
-            replace(/{{mysqlHostname}}/g, props.database.endpoint).
-            replace(/{{mysqlPort}}/g, props.database.port).
-            replace(/{{mysqlPassword}}/g, props.database.credentials).
-
-            replace(/{{accessKey}}/g, props.registry.accessKey).
-            replace(/{{secretKey}}/g, props.registry.secretKey).
-            replace(/{{storageBucketName}}/g, props.registry.bucketName).
-
-            replace(/{{issuerName}}/g, 'ca-issuer');
-
-
-        const values = loadYaml(doc);
-        createNestedObject(values, ["components", "imageBuilderMk3", "registry"], {});
-        if (process.env.IMAGE_PULL_SECRET_FILE) {
-            values.components.imageBuilderMk3.registry.secretName = "gitpod-image-pull-secret";
-        }
-
-        if (process.env.IMAGE_REGISTRY_WHITELIST) {
-            createNestedObject(values, ["components", "server", "defaultBaseImageRegistryWhitelist"], []);
-            process.env.IMAGE_REGISTRY_WHITELIST.split(',').forEach((registry: string) => {
-                values.components.server.defaultBaseImageRegistryWhitelist.push(registry);
-            });
-
-            values.components.server.defaultBaseImageRegistryWhitelist.push('https://index.docker.io/v1/');
-        }
-
-        const helmChart = cluster.addHelmChart('GitpodChart', {
-            chart: 'gitpod',
-            release: 'gitpod',
-            repository: 'https://aledbf.github.io/gitpod-chart-cleanup/',
-            namespace: 'default',
-            version: '1.3.4',
-            wait: true,
-            values,
-        });
-
-        doc = readYamlDocument(__dirname + '/charts/assets/ingress.yaml');
+        const doc = readYamlDocument(__dirname + '/charts/assets/ingress.yaml');
         const manifest = loadYaml(doc) as any;
 
         // configure TLS termination in the load balancer
@@ -110,6 +59,5 @@ export class GitpodStack extends cdk.Stack {
             overwrite: true,
             manifest: [manifest],
         });
-        gitpodIngress.node.addDependency(helmChart);
     }
 }

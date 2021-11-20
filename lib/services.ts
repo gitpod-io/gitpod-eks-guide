@@ -6,8 +6,8 @@ import { Database } from './database';
 import { Registry } from './registry';
 
 export class ServicesStack extends cdk.Stack {
-    readonly database: Database
-    readonly registry: Registry
+    //readonly database: Database
+    //readonly registry: Registry
 
     constructor(scope: cdk.Construct, id: string, props: cdk.StackProps) {
         super(scope, id, props)
@@ -17,7 +17,7 @@ export class ServicesStack extends cdk.Stack {
             vpcName: `eksctl-${process.env.CLUSTER_NAME}-cluster/VPC`,
             isDefault: false
         });
-
+        /*
         // create RDS database for gitpod
         this.database = new Database(this, 'RDS', {
             env: props.env,
@@ -26,13 +26,15 @@ export class ServicesStack extends cdk.Stack {
             username: 'gitpod'
         })
         this.database.node.addDependency(vpc);
-
+        */
         // create permissions to access S3 buckets
+        /*
         this.registry = new Registry(this, 'Registry', {
             env: props.env,
             clusterName: `${process.env.CLUSTER_NAME}`,
             bucketName: `${process.env.CONTAINER_REGISTRY_BUCKET}`,
             createBucket: process.env.CREATE_S3_BUCKET === 'true',
         });
+        */
     }
 }
