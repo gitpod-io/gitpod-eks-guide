@@ -2,6 +2,8 @@
 
 set -eo pipefail
 
+DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+
 function variables_from_context() {
     # Create EKS cluster without nodes
     # Generate a new kubeconfig file in the local directory
@@ -139,18 +141,15 @@ function install() {
     # Restart tigera-operator
     kubectl delete pod -n tigera-operator -l k8s-app=tigera-operator > /dev/null 2>&1
 
-    # Create RDS database, S3 bucket for docker-registry and IAM account for gitpod S3 storage
-    # the cdk application will generates a gitpod-values.yaml file to be used by helm
-
     # TODO: remove once we can reference a secret in the helm chart.
     # generated password cannot excede 41 characters (RDS limitation)
-    SSM_KEY="/gitpod/cluster/${CLUSTER_NAME}/region/${AWS_REGION}"
-    ${AWS_CMD} ssm put-parameter \
-        --overwrite \
-        --name "${SSM_KEY}" \
-        --type String \
-        --value "$(date +%s | sha256sum | base64 | head -c 35 ; echo)" \
-        --region "${AWS_REGION}" > /dev/null 2>&1
+    #SSM_KEY="/gitpod/cluster/${CLUSTER_NAME}/region/${AWS_REGION}"
+    #${AWS_CMD} ssm put-parameter \
+    #    --overwrite \
+    #    --name "${SSM_KEY}" \
+    #    --type String \
+    #    --value "$(date +%s | sha256sum | base64 | head -c 35 ; echo)" \
+    #    --region "${AWS_REGION}" > /dev/null 2>&1
 
     # deploy CDK stacks
     cdk deploy \
@@ -160,10 +159,46 @@ function install() {
         --context certificatearn="${CERTIFICATE_ARN}" \
         --context identityoidcissuer="$(${AWS_CMD} eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.identity.oidc.issuer" --output text --region "${AWS_REGION}")" \
         --require-approval never \
+        --outputs-file cdk-outputs.json \
         --all
 
+    # TLS termination is done in the ALB
+    cat <<EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: https-certificates
+spec:
+  dnsNames:
+  - ${DOMAIN}
+  - '*.${DOMAIN}'
+  - '*.ws.${DOMAIN}'
+  duration: 4380h0m0s
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: ca-issuer
+  secretName: https-certificates
+EOF
+
+    local CONFIG_FILE="${DIR}/gitpod-config.yaml"
+    gitpod-installer init > "${CONFIG_FILE}"
+
+    yq e -i ".certificate.name = \"https-certificates\"" "${CONFIG_FILE}"
+    yq e -i ".domain = \"${DOMAIN}\"" "${CONFIG_FILE}"
+    yq e -i ".metadata.region = \"${AWS_REGION}\"" "${CONFIG_FILE}"
+    yq e -i '.workspace.runtime.containerdRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"' "${CONFIG_FILE}"
+
+    gitpod-installer \
+        render \
+        --config="${CONFIG_FILE}" > gitpod.yaml
+
+    kubectl apply -f gitpod.yaml
+
     # wait for update of the ingress status
-    sleep 5
+    until [ -n "$(kubectl get ingress gitpod -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')" ]; do
+        sleep 5
+    done
 
     ALB_URL=$(kubectl get ingress gitpod -o json | jq -r .status.loadBalancer.ingress[0].hostname)
     if [ -n "${ALB_URL}" ];then

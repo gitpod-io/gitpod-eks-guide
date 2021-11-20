@@ -1,4 +1,4 @@
-ARG GITPOD_VERSION="sje-external-db.2"
+ARG GITPOD_VERSION="aledbf-eksinstaller.28"
 
 FROM eu.gcr.io/gitpod-core-dev/build/installer:$GITPOD_VERSION as installer
 
