@@ -106,7 +106,9 @@ managedNodeGroups:
 
       declare -a LABELS=(
         eks.amazonaws.com/nodegroup="${NODEGROUP}"
-        gitpod.io/workload_workspaces=true
+        gitpod.io/workload_workspace_services=true
+        gitpod.io/workload_workspace_regular=true
+        gitpod.io/workload_workspace_headless=true
       )
 
       export KUBELET_EXTRA_ARGS="$(printf -- "--max-pods=110 --node-labels=%s" $(IFS=$','; echo "${LABELS[*]}"))"
@@ -156,7 +158,8 @@ managedNodeGroups:
 
       declare -a LABELS=(
         eks.amazonaws.com/nodegroup="${NODEGROUP}"
-        gitpod.io/workload_services=true
+        gitpod.io/workload_meta=true
+        gitpod.io/workload_ide=true
       )
 
       export KUBELET_EXTRA_ARGS="$(printf -- "--max-pods=110 --node-labels=%s" $(IFS=$','; echo "${LABELS[*]}"))"
