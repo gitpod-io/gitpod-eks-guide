@@ -1,4 +1,4 @@
-ARG GITPOD_VERSION="aledbf-eksinstaller.28"
+ARG GITPOD_VERSION="aledbf-eksinstaller.29"
 
 FROM eu.gcr.io/gitpod-core-dev/build/installer:$GITPOD_VERSION as installer
 
@@ -14,6 +14,7 @@ RUN apk add --no-cache \
     jq \
     npm \
     yq \
+    openssl \
   && pip3 install --upgrade pip \
   && pip3 install \
     awscli \
