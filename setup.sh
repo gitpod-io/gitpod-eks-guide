@@ -141,15 +141,19 @@ function install() {
     # Restart tigera-operator
     kubectl delete pod -n tigera-operator -l k8s-app=tigera-operator > /dev/null 2>&1
 
-    # TODO: remove once we can reference a secret in the helm chart.
+    MYSQL_GITPOD_USERNAME="gitpod"
+    MYSQL_GITPOD_PASSWORD=$(openssl rand -hex 18)
+    MYSQL_GITPOD_SECRET="mysql-gitpod-token"
+    MYSQL_GITPOD_ENCRYPTION_KEY='[{"name":"general","version":1,"primary":true,"material":"4uGh1q8y2DYryJwrVMHs0kWXJlqvHWWt/KJuNi04edI="}]'
+
     # generated password cannot excede 41 characters (RDS limitation)
-    #SSM_KEY="/gitpod/cluster/${CLUSTER_NAME}/region/${AWS_REGION}"
-    #${AWS_CMD} ssm put-parameter \
-    #    --overwrite \
-    #    --name "${SSM_KEY}" \
-    #    --type String \
-    #    --value "$(date +%s | sha256sum | base64 | head -c 35 ; echo)" \
-    #    --region "${AWS_REGION}" > /dev/null 2>&1
+    SSM_KEY="/gitpod/cluster/${CLUSTER_NAME}/region/${AWS_REGION}"
+    ${AWS_CMD} ssm put-parameter \
+        --overwrite \
+        --name "${SSM_KEY}" \
+        --type String \
+        --value "${MYSQL_GITPOD_PASSWORD}" \
+        --region "${AWS_REGION}" > /dev/null 2>&1
 
     # deploy CDK stacks
     cdk deploy \
@@ -162,7 +166,7 @@ function install() {
         --outputs-file cdk-outputs.json \
         --all
 
-    # TLS termination is done in the ALB
+    # TLS termination is done in the ALB.
     cat <<EOF | kubectl apply -f -
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -181,12 +185,25 @@ spec:
   secretName: https-certificates
 EOF
 
+    echo "Create database secret..."
+    kubectl create secret generic "${MYSQL_GITPOD_SECRET}" \
+        --from-literal=encryptionKeys="${MYSQL_GITPOD_ENCRYPTION_KEY}" \
+        --from-literal=host="$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRDS")).value.MysqlEndpoint ' < cdk-outputs.json)" \
+        --from-literal=password="${MYSQL_GITPOD_PASSWORD}" \
+        --from-literal=port="3306" \
+        --from-literal=username="${MYSQL_GITPOD_USERNAME}" \
+        --dry-run=client -o yaml | \
+        kubectl replace --force -f -
+
     local CONFIG_FILE="${DIR}/gitpod-config.yaml"
     gitpod-installer init > "${CONFIG_FILE}"
 
     yq e -i ".certificate.name = \"https-certificates\"" "${CONFIG_FILE}"
     yq e -i ".domain = \"${DOMAIN}\"" "${CONFIG_FILE}"
     yq e -i ".metadata.region = \"${AWS_REGION}\"" "${CONFIG_FILE}"
+    yq e -i ".database.inCluster = false" "${CONFIG_FILE}"
+    yq e -i ".database.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
+    yq e -i ".database.external.certificate.name = \"${MYSQL_GITPOD_SECRET}\"" "${CONFIG_FILE}"
     yq e -i '.workspace.runtime.containerdRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"' "${CONFIG_FILE}"
 
     gitpod-installer \
