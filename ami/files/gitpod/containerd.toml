@@ -1,30 +1,38 @@
+# explicitly use v2 config format
 version = 2
 
-[plugins]
-  [plugins."io.containerd.grpc.v1.cri"]
-    max_concurrent_downloads = 20
-    sandbox_image = "k8s.gcr.io/pause:3.5"
-
-    [plugins."io.containerd.grpc.v1.cri".containerd]
-      default_runtime_name = "runc"
-      #snapshotter = "overlayfs"
-
-      snapshotter = "stargz"
-      disable_snapshot_annotations = false
-
-      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
-
-        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-          privileged_without_host_devices = false
-          runtime_type = "io.containerd.runc.v2"
-
-          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-            SystemdCgroup = true
-
-    [plugins."io.containerd.grpc.v1.cri".registry]
-      config_path = "/etc/containerd/certs.d"
-
 [proxy_plugins]
-  [proxy_plugins.stargz]
-    type = "snapshot"
-    address = "/run/containerd-stargz-grpc/containerd-stargz-grpc.sock"
+# stargz is used for lazy pulling
+[proxy_plugins.stargz]
+  type = "snapshot"
+  address = "/run/containerd-stargz-grpc/containerd-stargz-grpc.sock"
+
+[plugins."io.containerd.grpc.v1.cri".containerd]
+  # save disk space when using a single snapshotter
+  discard_unpacked_layers = true
+  # enable stargz snapshotter
+  snapshotter = "stargz"
+  # pass additional snapshotter labels to remote snapshotter
+  disable_snapshot_annotations = false
+  # explicit default here, as we're configuring it below
+  default_runtime_name = "runc"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  # set default runtime handler to v2, which has a per-pod shim
+  runtime_type = "io.containerd.runc.v2"
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+  SystemdCgroup = true
+
+# allow pulling from registries using self-signed SSL certificates
+[plugins."io.containerd.grpc.v1.cri".registry]
+  config_path = "/etc/containerd/certs.d"
+
+[plugins."io.containerd.grpc.v1.cri"]
+  max_concurrent_downloads = 20
+  # use fixed sandbox image
+  sandbox_image = "k8s.gcr.io/pause:3.6"
+  # allow hugepages controller to be missing
+  # see https://github.com/containerd/cri/pull/1501
+  tolerate_missing_hugepages_controller = true
+  # restrict_oom_score_adj needs to be true when running inside UserNS (rootless)
+  restrict_oom_score_adj = false

@@ -12,6 +12,7 @@ ExecStart=/usr/bin/kubelet --cloud-provider aws \
     --resolv-conf=/run/systemd/resolve/resolv.conf \
     --container-runtime remote \
     --container-runtime-endpoint unix:///run/containerd/containerd.sock \
+    --image-service-endpoint=unix:///run/containerd-stargz-grpc/containerd-stargz-grpc.sock \
     $KUBELET_ARGS $KUBELET_EXTRA_ARGS
 
 Restart=on-failure

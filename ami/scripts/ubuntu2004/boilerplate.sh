@@ -4,6 +4,8 @@ set -o pipefail
 set -o nounset
 set -o errexit
 
+export DEBIAN_FRONTEND=noninteractive
+
 # shellcheck disable=SC1091
 source /etc/packer/files/functions.sh
 
@@ -11,7 +13,7 @@ source /etc/packer/files/functions.sh
 wait_for_cloudinit
 
 # upgrade the operating system
-apt-get update -y && apt-get upgrade -y
+apt update -y && apt dist-upgrade -y
 
 # install dependencies
 apt-get install -y \
