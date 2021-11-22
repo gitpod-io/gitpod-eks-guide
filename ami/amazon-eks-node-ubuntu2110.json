@@ -1,10 +1,9 @@
 {
   "variables":{
-    "aws_region":"us-east-2",
-    "ami_description":"EKS Kubernetes Worker AMI on Ubuntu 20.04 (k8s: {{user `eks_version`}})",
+    "aws_region":"us-west-2",
+    "ami_description":"EKS Kubernetes Worker AMI on Ubuntu 21.10 (k8s: {{user `eks_version`}})",
     "eks_version":"",
     "eks_build_date":"",
-    "cni_plugin_version": "v0.9.1",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
     "hardening_flag": "false",
@@ -20,8 +19,8 @@
     "source_ami_owner_govcloud": "513442679011",
     "source_ami_ssh_user": "ubuntu",
     "source_ami_arch":"x86_64",
-    "source_ami_name":"ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*",
-    "target_ami_name": "amazon-eks-node-{{user `eks_version`}}-ubuntu-20.04-{{ timestamp }}"
+    "source_ami_name":"ubuntu/images/hvm-ssd/ubuntu-impish-21.10-amd64-server-*",
+    "target_ami_name": "amazon-eks-node-{{user `eks_version`}}-ubuntu-21.10-{{ timestamp }}"
   },
   "builders":[
     {
@@ -41,7 +40,7 @@
         ],
         "most_recent":true
       },
-      "instance_type":"m5.xlarge",
+      "instance_type":"m6i.xlarge",
       "ssh_username":"{{user `source_ami_ssh_user`}}",
       "ssh_pty":true,
       "subnet_id":"{{user `subnet_id`}}",
@@ -63,7 +62,7 @@
         {
           "device_name":"/dev/sdb",
           "volume_size":"{{user `data_volume_size`}}",
-          "volume_type":"gp2",
+          "volume_type":"gp3",
           "delete_on_termination":true
         }
       ],
@@ -106,7 +105,6 @@
         "KUBERNETES_BUILD_DATE={{user `eks_build_date`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
-        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
         "HARDENING_FLAG={{user `hardening_flag`}}"
       ],
       "execute_command":"echo 'packer' | {{.Vars}} sudo -S -E bash -eux '{{.Path}}'",
@@ -128,8 +126,16 @@
         "KUBERNETES_BUILD_DATE={{user `eks_build_date`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
-        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
         "HARDENING_FLAG={{user `hardening_flag`}}"
+      ],
+      "execute_command":"echo 'packer' | {{.Vars}} sudo -S -E bash -eux '{{.Path}}'",
+      "expect_disconnect":true,
+      "pause_after":"30s"
+    },
+    {
+      "type":"shell",
+      "scripts":[
+        "./scripts/ubuntu2004/shiftfs.sh"
       ],
       "execute_command":"echo 'packer' | {{.Vars}} sudo -S -E bash -eux '{{.Path}}'",
       "expect_disconnect":true,
@@ -149,7 +155,6 @@
         "KUBERNETES_BUILD_DATE={{user `eks_build_date`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
-        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
         "HARDENING_FLAG={{user `hardening_flag`}}"
       ],
       "execute_command":"echo 'packer' | {{.Vars}} sudo -S -E bash -eux '{{.Path}}'"

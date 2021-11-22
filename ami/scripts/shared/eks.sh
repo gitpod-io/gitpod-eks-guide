@@ -71,20 +71,6 @@ for binary in ${BINARIES[*]} ; do
     mv $binary /usr/bin/
 done
 
-# Since CNI 0.7.0, all releases are done in the plugins repo.
-CNI_PLUGIN_FILENAME="cni-plugins-linux-${ARCH}-${CNI_PLUGIN_VERSION}"
-
-curl -sL -o "${CNI_PLUGIN_FILENAME}.tgz" "https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/${CNI_PLUGIN_FILENAME}.tgz"
-curl -sL -o "${CNI_PLUGIN_FILENAME}.tgz.sha512" "https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/${CNI_PLUGIN_FILENAME}.tgz.sha512"
-
-sha512sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha512"
-rm "${CNI_PLUGIN_FILENAME}.tgz.sha512"
-
-tar -xvf "${CNI_PLUGIN_FILENAME}.tgz" -C /opt/cni/bin
-rm "${CNI_PLUGIN_FILENAME}.tgz"
-
-rm ./*.sha256
-
 mkdir -p /etc/kubernetes/kubelet
 mkdir -p /etc/systemd/system/kubelet.service.d
 
@@ -98,16 +84,12 @@ configure_kubelet_environment
 
 systemctl daemon-reload && systemctl disable kubelet
 
-mkdir -p /var/lib/containerd/io.containerd.snapshotter.v1.stargz
-
 ################################################################################
 ### EKS ########################################################################
 ################################################################################
 
 mkdir -p /etc/eks
-# Temporal https://github.com/awslabs/amazon-eks-ami/pull/735
-curl -sL -o /etc/eks/eni-max-pods.txt https://raw.githubusercontent.com/awslabs/amazon-eks-ami/e9b681acc4ea08d22a82eb4388734a225d153561/files/eni-max-pods.txt
-# https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/files/eni-max-pods.txt
+curl -sL -o /etc/eks/eni-max-pods.txt https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/files/eni-max-pods.txt
 
 cp /etc/packer/files/gitpod/bootstrap.sh /etc/eks/bootstrap.sh
 chown root:root /etc/eks/bootstrap.sh

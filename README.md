@@ -20,13 +20,13 @@ Please update the `ami` field in the [eks-cluster.yaml](eks-cluster.yaml) file w
 
 | Region       | AMI                   |
 | ------------ | --------------------- |
-| us-west-1    | ami-06c84b5625f8b9604 |
-| us-west-2    | ami-0a9aa973650d0c831 |
-| eu-west-1    | ami-0de99790cc9326e71 |
-| eu-west-2    | ami-0fea47c0b713f556a |
-| eu-central-1 | ami-037f1d445b7fce6d9 |
-| us-east-1    | ami-0cb54c9245b490884 |
-| us-east-2    | ami-0648e811b79d1c89a |
+| us-west-1    | ami-0f3e6671ef1ede777 |
+| us-west-2    | ami-04a6d2a3b0d131841 |
+| eu-west-1    | ami-0542a7d18c5df4e79 |
+| eu-west-2    | ami-060cb8be1976f9dd5 |
+| eu-central-1 | ami-0d58b84ef791d4348 |
+| us-east-1    | ami-0efd7bb7f07150aa3 |
+| us-east-2    | ami-08b5bc88b0131552f |
 
 
 **To start the installation, execute:**
@@ -41,12 +41,12 @@ The whole process takes around forty minutes. In the end, the following resource
 
 - an EKS cluster running Kubernetes v1.21
 - Kubernetes nodes using a custom [AMI image](https://github.com/gitpod-io/amazon-eks-custom-amis/tree/gitpod):
-  - Ubuntu 20.04
+  - Ubuntu 21.10
   - Linux kernel v5.13
-  - containerd v1.5.5
+  - containerd v1.5.8
   - runc: v1.0.1
   - CNI plugins: v0.9.1
-  - Stargz Snapshotter: v0.7.0
+  - Stargz Snapshotter: v0.10.0
 
 - ALB load balancer with TLS termination and re-encryption
 - RDS Mysql database
