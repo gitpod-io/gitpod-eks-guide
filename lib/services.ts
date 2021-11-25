@@ -3,7 +3,7 @@ import * as cdk from '@aws-cdk/core'
 import * as ec2 from '@aws-cdk/aws-ec2'
 
 import { Database } from './database';
-//import { Registry } from './registry';
+import { Registry } from './registry';
 
 export class ServicesStack extends cdk.Stack {
     //readonly registry: Registry
@@ -27,13 +27,11 @@ export class ServicesStack extends cdk.Stack {
         database.node.addDependency(vpc);
 
         // create permissions to access S3 buckets
-        /*
-        this.registry = new Registry(this, 'Registry', {
+        const registry = new Registry(this, 'Registry', {
             env: props.env,
             clusterName: `${process.env.CLUSTER_NAME}`,
             bucketName: `${process.env.CONTAINER_REGISTRY_BUCKET}`,
             createBucket: process.env.CREATE_S3_BUCKET === 'true',
         });
-        */
     }
 }

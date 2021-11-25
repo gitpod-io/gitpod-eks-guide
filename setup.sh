@@ -145,6 +145,7 @@ function install() {
     MYSQL_GITPOD_PASSWORD=$(openssl rand -hex 18)
     MYSQL_GITPOD_SECRET="mysql-gitpod-token"
     MYSQL_GITPOD_ENCRYPTION_KEY='[{"name":"general","version":1,"primary":true,"material":"4uGh1q8y2DYryJwrVMHs0kWXJlqvHWWt/KJuNi04edI="}]'
+    SECRET_STORAGE="object-storage-gitpod-token"
 
     # generated password cannot excede 41 characters (RDS limitation)
     SSM_KEY="/gitpod/cluster/${CLUSTER_NAME}/region/${AWS_REGION}"
@@ -195,6 +196,13 @@ EOF
         --dry-run=client -o yaml | \
         kubectl replace --force -f -
 
+    echo "Create storage secret..."
+    kubectl create secret generic "${SECRET_STORAGE}" \
+        --from-literal=s3AccessKey="$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRegistry")).value.AccessKeyId ' < cdk-outputs.json)" \
+        --from-literal=s3SecretKey="$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRegistry")).value.SecretAccessKey ' < cdk-outputs.json)" \
+        --dry-run=client -o yaml | \
+        kubectl replace --force -f -
+
     local CONFIG_FILE="${DIR}/gitpod-config.yaml"
     gitpod-installer init > "${CONFIG_FILE}"
 
@@ -205,6 +213,9 @@ EOF
     yq e -i ".database.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
     yq e -i ".database.external.certificate.name = \"${MYSQL_GITPOD_SECRET}\"" "${CONFIG_FILE}"
     yq e -i '.workspace.runtime.containerdRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"' "${CONFIG_FILE}"
+    yq e -i ".containerRegistry.s3storage.bucket = \"${CONTAINER_REGISTRY_BUCKET}\"" "${CONFIG_FILE}"
+    yq e -i ".containerRegistry.s3storage.certificate.kind = \"secret\"" "${CONFIG_FILE}"
+    yq e -i ".containerRegistry.s3storage.certificate.name = \"${SECRET_STORAGE}\"" "${CONFIG_FILE}"
 
     gitpod-installer \
         render \
