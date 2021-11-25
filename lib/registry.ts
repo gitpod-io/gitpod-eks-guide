@@ -11,10 +11,6 @@ export interface RegistryProps extends cdk.StackProps {
 }
 
 export class Registry extends cdk.Stack {
-    readonly _bucket: string
-    readonly _iamAccessKey: string
-    readonly _iamSecretKey: string
-
     constructor(scope: cdk.Construct, id: string, props: RegistryProps) {
         super(scope, id, props);
 
@@ -33,8 +29,6 @@ export class Registry extends cdk.Stack {
                 bucketArn: `arn:aws:s3:::${props.bucketName}`,
             });
         }
-
-        this._bucket = props.bucketName;
 
         const GitpodRegistryAccess = new iam.Policy(this, 'RegistryAccess', {
             policyName: 'GitpodS3Access',
@@ -82,19 +76,13 @@ export class Registry extends cdk.Stack {
         });
         accessKey.node.addDependency(user);
 
-        this._iamAccessKey = accessKey.ref;
-        this._iamSecretKey = accessKey.attrSecretAccessKey;
-    }
-
-    get bucketName() {
-        return this._bucket;
-    }
-
-    get accessKey() {
-        return this._iamAccessKey;
-    }
-
-    get secretKey() {
-        return this._iamSecretKey;
+        new cdk.CfnOutput(this, "AccessKeyId", {
+            value: accessKey.ref,
+            exportName: "AccessKeyId",
+        });
+        new cdk.CfnOutput(this, "SecretAccessKey", {
+            value: accessKey.attrSecretAccessKey,
+            exportName: "SecretAccessKey",
+        });
     }
 }
