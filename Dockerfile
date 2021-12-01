@@ -1,4 +1,4 @@
-ARG GITPOD_VERSION="aledbf-insts3.1"
+ARG GITPOD_VERSION="main.1962"
 
 FROM eu.gcr.io/gitpod-core-dev/build/installer:$GITPOD_VERSION as installer
 
