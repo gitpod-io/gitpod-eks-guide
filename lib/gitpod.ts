@@ -1,25 +1,18 @@
 import {
     Construct,
     Stack,
-    StackProps,
-    Duration
+    StackProps
 } from '@aws-cdk/core';
-import { NodejsFunction } from '@aws-cdk/aws-lambda-nodejs';
 
 import { KubernetesManifest } from '@aws-cdk/aws-eks';
 
 import { readYamlDocument, loadYaml } from './charts/utils';
-//import { Database } from './database';
-//import { Registry } from './registry';
 import { importCluster } from './charts/cluster-utils';
 
 export interface GitpodProps extends StackProps {
     domain: string
 
     certificateArn?: string
-
-    //database: Database
-    //registry: Registry
 }
 
 export class GitpodStack extends Stack {
