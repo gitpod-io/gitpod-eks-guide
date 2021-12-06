@@ -1,4 +1,4 @@
-ARG GITPOD_VERSION="main.1962"
+ARG GITPOD_VERSION="main.1988"
 
 FROM eu.gcr.io/gitpod-core-dev/build/installer:$GITPOD_VERSION as installer
 
