@@ -216,12 +216,24 @@ EOF
     yq e -i ".containerRegistry.s3storage.bucket = \"${CONTAINER_REGISTRY_BUCKET}\"" "${CONFIG_FILE}"
     yq e -i ".containerRegistry.s3storage.certificate.kind = \"secret\"" "${CONFIG_FILE}"
     yq e -i ".containerRegistry.s3storage.certificate.name = \"${SECRET_STORAGE}\"" "${CONFIG_FILE}"
+    yq e -i ".workspace.runtime.fsShiftMethod = \"shiftfs\"" "${CONFIG_FILE}"
 
     gitpod-installer \
         render \
         --config="${CONFIG_FILE}" > gitpod.yaml
 
     kubectl apply -f gitpod.yaml
+
+    # remove shiftfs-module-loader container.
+    # TODO: remove once the container is removed from the installer
+    kubectl patch daemonset ws-daemon --type json -p='[{"op": "remove",  "path": "/spec/template/spec/initContainers/3"}]'
+    # Patch proxy service to remove use of cloud load balancer. In EKS we use ALB.
+    kubectl patch service   proxy     --type merge --patch \
+"$(cat <<EOF
+spec:
+  type: ClusterIP
+EOF
+)"
 
     # wait for update of the ingress status
     until [ -n "$(kubectl get ingress gitpod -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')" ]; do
