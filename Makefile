@@ -22,6 +22,7 @@ build: ## Build docker image containing the required tools for the installation
 	@mkdir -p ${PWD}/logs
 
 DOCKER_RUN_CMD = docker run -it \
+	--pull always \
 	--env-file ${PWD}/.env \
 	--env NODE_ENV=production \
 	--volume ${PWD}/.kubeconfig:/gitpod/.kubeconfig \
