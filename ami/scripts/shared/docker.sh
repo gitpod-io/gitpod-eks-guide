@@ -36,8 +36,9 @@ blacklist dccp
 blacklist sctp
 EOF
 
-# Enable cgroups2
-# sed -i 's/GRUB_CMDLINE_LINUX="\(.*\)"/GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=1 \1"/g' /etc/default/grub
+# Disable cgroups2
+sed -i 's/GRUB_CMDLINE_LINUX="\(.*\)"/GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=0 \1"/g' /etc/default/grub
+update-grub
 
 # Install containerd
 curl -sSL https://github.com/containerd/nerdctl/releases/download/v0.14.0/nerdctl-full-0.14.0-linux-amd64.tar.gz -o - | tar -xz -C /usr/local
