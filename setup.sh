@@ -231,7 +231,7 @@ EOF
     kubectl patch service   proxy     --type merge --patch \
 "$(cat <<EOF
 spec:
-  type: ClusterIP
+  type: NodePort
 EOF
 )"
 
