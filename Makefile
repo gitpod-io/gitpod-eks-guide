@@ -18,11 +18,10 @@ else
 endif
 
 build: ## Build docker image containing the required tools for the installation
-	@docker build --squash --quiet . -t ${IMG}
+	@docker build --quiet . -t ${IMG}
 	@mkdir -p ${PWD}/logs
 
 DOCKER_RUN_CMD = docker run -it \
-	--pull always \
 	--env-file ${PWD}/.env \
 	--env NODE_ENV=production \
 	--volume ${PWD}/.kubeconfig:/gitpod/.kubeconfig \
