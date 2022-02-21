@@ -1,6 +1,6 @@
 FROM alpine:edge
 
-ARG GITPOD_VERSION="2022.01"
+ARG GITPOD_VERSION="2022.01.1"
 
 RUN apk add --no-cache \
     bash \
