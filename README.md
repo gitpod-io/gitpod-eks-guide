@@ -6,13 +6,19 @@ Before starting the installation process, you need:
 
 - An AWS account with Administrator access
   - [Create one now by clicking here](https://aws.amazon.com/getting-started/)
-- A SSL Certificate created with [AWS Certificate Manager](https://aws.amazon.com/en/certificate-manager/)
 - AWS credentials set up. By default, those configs are present in `$HOME/.aws/`.
 - [eksctl](https://eksctl.io/) config file describing the cluster.
   - Here is an [eks-cluster.yaml](eks-cluster.yaml) you can use as example.
 - A `.env` file with basic details about the environment.
   - We provide an example of such file [here](.env.example).
 - [Docker](https://docs.docker.com/engine/install/) installed on your machine, or better, a Gitpod workspace :)
+
+### SSL Certificate
+
+Create a public SSL/TLS certificate with [AWS Certificate Manager](https://aws.amazon.com/en/certificate-manager/),
+valid for the `<domain>`, `*.ws.<domain>` and `*.<domain>` Domain names.
+
+Once the certificate is issued and verified, Update the `CERTIFICATE_ARN` field in the `.env` file accordingly.
 
 ### Choose an Amazon Machine Image (AMI)
 
