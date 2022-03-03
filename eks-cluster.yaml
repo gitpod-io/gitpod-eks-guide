@@ -122,6 +122,77 @@ managedNodeGroups:
     # or use a custom list
     instanceTypes: ["m6i.xlarge", "m6i.2xlarge"]
 
+  - name: gpu
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 10
+    # because of AWS addons
+    disableIMDSv1: false
+    # Please configure the size of the volume and additional features
+    # https://eksctl.io/usage/schema/#nodeGroups-volumeType
+    # https://aws.amazon.com/es/ebs/pricing/
+    volumeSize: 300
+    volumeType: gp3
+    volumeIOPS: 6000
+    volumeThroughput: 500
+    ebsOptimized: true
+    # Use private subnets for nodes
+    # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
+    privateNetworking: true
+    amiFamily: AmazonLinux2
+
+    tags:
+      # EC2 tags required for cluster-autoscaler auto-discovery
+      k8s.io/cluster-autoscaler/enabled: "true"
+      k8s.io/cluster-autoscaler/gitpod: "owned"
+
+      # GPU autoscale tags
+      k8s.io/cluster-autoscaler/node-template/taint/dedicated: nvidia.com/gpu=true
+      k8s.io/cluster-autoscaler/node-template/label/nvidia.com/gpu: 'true'
+
+    labels:
+      nvidia.com/gpu: 'true'
+      k8s.amazonaws.com/accelerator: nvidia-tesla
+
+    iam:
+      attachPolicyARNs: &attachPolicyARNs
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      withAddonPolicies: &withAddonPolicies
+        albIngress: true
+        autoScaler: true
+        cloudWatch: true
+        certManager: true
+        ebs: true
+    # Using custom AMI images require the definition of overrideBootstrapCommand
+    # to ensure that nodes are able to join the cluster https://eksctl.io/usage/custom-ami-support/
+    #overrideBootstrapCommand: |
+    #  #!/bin/bash
+#
+    #  export CLUSTERNAME=gitpod
+    #  export NODEGROUP=gpu
+#
+    #  declare -a LABELS=(
+    #    eks.amazonaws.com/nodegroup="${NODEGROUP}"
+    #    gitpod.io/workload_workspace_services=true
+    #    gitpod.io/workload_workspace_regular=true
+    #    gitpod.io/workload_workspace_headless=true
+    #  )
+#
+    #  export KUBELET_EXTRA_ARGS="$(printf -- "--max-pods=110 --node-labels=%s" $(IFS=$','; echo "${LABELS[*]}"))"
+    #  /etc/eks/bootstrap.sh ${CLUSTERNAME}
+
+    spot: false
+
+    #  gpu: 1
+    #  vCPUs: 4
+    #  memory: 61Gib
+    instanceTypes: ["p2.xlarge"]
+
+
   - name: services
     desiredCapacity: 1
     minSize: 1
