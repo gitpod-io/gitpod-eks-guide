@@ -1,5 +1,9 @@
 # Running Gitpod in [Amazon EKS](https://aws.amazon.com/en/eks/)
 
+> **IMPORTANT** This guide exists as a simple and reliable way of creating a Gitpod instance in Amazon EKS. It
+> is not designed to cater for every situation. If you find that it does not meet your exact needs,
+> please fork this guide and amend it to your own needs.
+
 ## Provision an EKS cluster
 
 Before starting the installation process, you need:
