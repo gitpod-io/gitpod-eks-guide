@@ -31,6 +31,8 @@ DOCKER_RUN_CMD = docker run -it \
 	--volume ${PWD}/gitpod-config.yaml:/gitpod/gitpod-config.yaml \
 	--volume ${PWD}/cdk-outputs.json:/gitpod/cdk-outputs.json \
 	--volume ${HOME}/.aws:/root/.aws \
+	--volume ${PWD}/setup.sh:/gitpod/setup.sh \
+	--volume ${PWD}/nvidia-device-plugin.yml:/gitpod/nvidia-device-plugin.yml \
 	${IMG} $(1)
 
 install: ## Install Gitpod

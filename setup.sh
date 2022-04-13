@@ -102,6 +102,11 @@ function install() {
     # Install Calico.
     kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
 
+    # Apply NVIDIA Kubernetes device plugin as daemon set
+    # https://aws.amazon.com/blogs/compute/running-gpu-accelerated-kubernetes-workloads-on-p3-and-p2-ec2-instances-with-amazon-eks/
+    #kubectl create -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v1.10/nvidia-device-plugin.yml
+    kubectl apply -f /gitpod/nvidia-device-plugin.yml
+
     # Create secret with container registry credentials
     if [ -n "${IMAGE_PULL_SECRET_FILE}" ] && [ -f "${IMAGE_PULL_SECRET_FILE}" ]; then
         kubectl create secret generic gitpod-image-pull-secret \
@@ -204,7 +209,7 @@ EOF
         kubectl replace --force -f -
 
     local CONFIG_FILE="${DIR}/gitpod-config.yaml"
-    gitpod-installer init > "${CONFIG_FILE}"
+    # gitpod-installer init > "${CONFIG_FILE}"
 
     yq e -i ".certificate.name = \"https-certificates\"" "${CONFIG_FILE}"
     yq e -i ".domain = \"${DOMAIN}\"" "${CONFIG_FILE}"
@@ -213,10 +218,13 @@ EOF
     yq e -i ".database.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
     yq e -i ".database.external.certificate.name = \"${MYSQL_GITPOD_SECRET}\"" "${CONFIG_FILE}"
     yq e -i '.workspace.runtime.containerdRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"' "${CONFIG_FILE}"
-    yq e -i ".containerRegistry.s3storage.bucket = \"${CONTAINER_REGISTRY_BUCKET}\"" "${CONFIG_FILE}"
-    yq e -i ".containerRegistry.s3storage.certificate.kind = \"secret\"" "${CONFIG_FILE}"
-    yq e -i ".containerRegistry.s3storage.certificate.name = \"${SECRET_STORAGE}\"" "${CONFIG_FILE}"
+    # yq e -i ".containerRegistry.s3storage.bucket = \"${CONTAINER_REGISTRY_BUCKET}\"" "${CONFIG_FILE}"
+    # yq e -i ".containerRegistry.s3storage.certificate.kind = \"secret\"" "${CONFIG_FILE}"
+    # yq e -i ".containerRegistry.s3storage.certificate.name = \"${SECRET_STORAGE}\"" "${CONFIG_FILE}"
     yq e -i ".workspace.runtime.fsShiftMethod = \"shiftfs\"" "${CONFIG_FILE}"
+
+    # GPU
+    yq e -i ".workspace.resources.limits.\"nvidia.com/gpu\" = \"1\"" "${CONFIG_FILE}"
 
     gitpod-installer \
         render \
