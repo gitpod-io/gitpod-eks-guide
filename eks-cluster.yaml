@@ -69,7 +69,7 @@ managedNodeGroups:
     # Please configure the size of the volume and additional features
     # https://eksctl.io/usage/schema/#nodeGroups-volumeType
     # https://aws.amazon.com/es/ebs/pricing/
-    volumeSize: 300
+    volumeSize: 500
     volumeType: gp3
     volumeIOPS: 6000
     volumeThroughput: 500
