@@ -167,89 +167,62 @@ function install() {
         --outputs-file cdk-outputs.json \
         --all
 
-    # TLS termination is done in the ALB.
-    cat <<EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: https-certificates
-spec:
-  dnsNames:
-  - ${DOMAIN}
-  - '*.${DOMAIN}'
-  - '*.ws.${DOMAIN}'
-  duration: 4380h0m0s
-  issuerRef:
-    group: cert-manager.io
-    kind: Issuer
-    name: ca-issuer
-  secretName: https-certificates
-EOF
-
-    echo "Create database secret..."
-    kubectl create secret generic "${MYSQL_GITPOD_SECRET}" \
-        --from-literal=encryptionKeys="${MYSQL_GITPOD_ENCRYPTION_KEY}" \
-        --from-literal=host="$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRDS")).value.MysqlEndpoint ' < cdk-outputs.json)" \
-        --from-literal=password="${MYSQL_GITPOD_PASSWORD}" \
-        --from-literal=port="3306" \
-        --from-literal=username="${MYSQL_GITPOD_USERNAME}" \
-        --dry-run=client -o yaml | \
-        kubectl replace --force -f -
-
-    echo "Create storage secret..."
-    kubectl create secret generic "${SECRET_STORAGE}" \
-        --from-literal=s3AccessKey="$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRegistry")).value.AccessKeyId ' < cdk-outputs.json)" \
-        --from-literal=s3SecretKey="$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRegistry")).value.SecretAccessKey ' < cdk-outputs.json)" \
-        --dry-run=client -o yaml | \
-        kubectl replace --force -f -
-
-    local CONFIG_FILE="${DIR}/gitpod-config.yaml"
-    gitpod-installer init > "${CONFIG_FILE}"
-
-    yq e -i ".certificate.name = \"https-certificates\"" "${CONFIG_FILE}"
-    yq e -i ".domain = \"${DOMAIN}\"" "${CONFIG_FILE}"
-    yq e -i ".metadata.region = \"${AWS_REGION}\"" "${CONFIG_FILE}"
-    yq e -i ".database.inCluster = false" "${CONFIG_FILE}"
-    yq e -i ".database.external.certificate.kind = \"secret\"" "${CONFIG_FILE}"
-    yq e -i ".database.external.certificate.name = \"${MYSQL_GITPOD_SECRET}\"" "${CONFIG_FILE}"
-    yq e -i '.workspace.runtime.containerdRuntimeDir = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"' "${CONFIG_FILE}"
-    yq e -i ".containerRegistry.s3storage.bucket = \"${CONTAINER_REGISTRY_BUCKET}\"" "${CONFIG_FILE}"
-    yq e -i ".containerRegistry.s3storage.certificate.kind = \"secret\"" "${CONFIG_FILE}"
-    yq e -i ".containerRegistry.s3storage.certificate.name = \"${SECRET_STORAGE}\"" "${CONFIG_FILE}"
-    yq e -i ".workspace.runtime.fsShiftMethod = \"shiftfs\"" "${CONFIG_FILE}"
-
-    gitpod-installer \
-        render \
-        --config="${CONFIG_FILE}" > gitpod.yaml
-
-    # See https://github.com/gitpod-io/gitpod/tree/main/install/installer#error-validating-statefulsetstatus
-    yq eval-all --inplace \
-        'del(select(.kind == "StatefulSet" and .metadata.name == "openvsx-proxy").status)' \
-        gitpod.yaml
-
-    kubectl apply -f gitpod.yaml
-
-    # remove shiftfs-module-loader container.
-    # TODO: remove once the container is removed from the installer
-    kubectl patch daemonset ws-daemon --type json -p='[{"op": "remove",  "path": "/spec/template/spec/initContainers/3"}]'
-    # Patch proxy service to remove use of cloud load balancer. In EKS we use ALB.
-    kubectl patch service   proxy     --type merge --patch \
-"$(cat <<EOF
-spec:
-  type: NodePort
-EOF
-)"
-
-    # wait for update of the ingress status
-    until [ -n "$(kubectl get ingress gitpod -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')" ]; do
-        sleep 5
-    done
-
-    ALB_URL=$(kubectl get ingress gitpod -o json | jq -r .status.loadBalancer.ingress[0].hostname)
-    if [ -n "${ALB_URL}" ];then
-        printf '\nLoad balancer hostname: %s\n' "${ALB_URL}"
-    fi
+    output_config
 }
+
+function output_config() {
+
+  MYSQL_HOST=$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRDS")).value.MysqlEndpoint ' < cdk-outputs.json)
+  S3_ACCESS_KEY=$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRegistry")).value.AccessKeyId ' < cdk-outputs.json)
+  S3_SECRET_KEY=$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRegistry")).value.SecretAccessKey ' < cdk-outputs.json)
+
+  cat << EOF
+
+==========================
+🎉🥳🔥🧡🚀
+
+Your cloud infrastructure is ready to install Gitpod. Please visit
+https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod
+for your next steps.
+
+Passwords may change on subsequents runs of this guide.
+
+=================
+Config Parameters
+=================
+
+Domain Name: ${DOMAIN}
+
+Database
+========
+Host: ${MYSQL_HOST}
+Username: ${MYSQL_GITPOD_USERNAME}
+Password: ${MYSQL_GITPOD_PASSWORD}
+Port: 3306
+
+Container Registry Storage
+========
+S3 BUCKET NAME: ${CONTAINER_REGISTRY_BUCKET}
+S3 ACCESS KEY: ${S3_ACCESS_KEY}
+S3 SECRET KEY: ${S3_SECRET_KEY}
+
+TLS Certificates
+================
+Issuer name: gitpod-selfsigned-issuer
+Issuer type: Issuer
+
+
+Once Gitpod is installed, and the DNS records are updated, Run the following commands:
+
+# remove shiftfs-module-loader container.
+# TODO: remove once the container is removed from the installer
+kubectl patch daemonset ws-daemon --type json -p='[{"op": "remove",  "path": "/spec/template/spec/initContainers/3"}]'
+
+# Use the following URL for DNS
+kubectl get ingress gitpod -o json | jq -r .status.loadBalancer.ingress[0].hostname
+EOF
+}
+
 
 function uninstall() {
     check_prerequisites "$1"

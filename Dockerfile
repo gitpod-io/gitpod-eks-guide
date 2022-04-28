@@ -1,7 +1,5 @@
 FROM alpine:edge
 
-ARG GITPOD_VERSION="2022.03.1"
-
 RUN apk add --no-cache \
     bash \
     curl \
@@ -28,9 +26,6 @@ RUN curl -fsSL "https://storage.googleapis.com/kubernetes-release/release/$(curl
 
 RUN curl -fsSL https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.3/aws-iam-authenticator_0.5.3_linux_amd64 -o /usr/local/bin/aws-iam-authenticator \
   && chmod +x /usr/local/bin/aws-iam-authenticator
-
-RUN curl -fsSL https://github.com/gitpod-io/gitpod/releases/download/${GITPOD_VERSION}/gitpod-installer-linux-amd64 -o /usr/local/bin/gitpod-installer \
-  && chmod +x /usr/local/bin/gitpod-installer
 
 WORKDIR /gitpod
 
