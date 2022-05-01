@@ -98,3 +98,15 @@ make uninstall
 > `Are you sure you want to delete: Gitpod, Services/Registry, Services/RDS, Services, Addons, Setup (y/n)?`
 
 > Please make sure you delete the S3 bucket used to store the docker registry images!
+
+
+## containerd modifications if using AWS amis
+
+AMI ID's:
+aws ssm get-parameter --name /aws/service/eks/optimized-ami/1.22/amazon-linux-2/recommended/image_id --query "Parameter.Value" --output text
+
+
+workspace:
+  runtime:
+    containerdRuntimeDir: /run/containerd/io.containerd.runtime.v1.linux/k8s.io
+    containerdSocket: /run/containerd/containerd.sock

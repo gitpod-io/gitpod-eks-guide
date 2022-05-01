@@ -60,8 +60,9 @@ export class Registry extends cdk.Stack {
             ],
         });
 
-        const storage = new iam.Group(this, 'RegistryStorage', {
-            groupName: 'RegistryStorage',
+        const groupName = `RegistryStorage-${props.clusterName}`
+        const storage = new iam.Group(this, groupName, {
+            groupName: groupName,
         });
         storage.attachInlinePolicy(GitpodRegistryAccess);
 

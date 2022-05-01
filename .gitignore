@@ -19,3 +19,6 @@ gitpod-ingress.yaml
 logs
 
 config.json
+
+cdk-outputs.json
+

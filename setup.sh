@@ -73,6 +73,7 @@ function check_prerequisites() {
 
 # Bootstrap AWS CDK - https://docs.aws.amazon.com/cdk/latest/guide/bootstrapping.html
 function ensure_aws_cdk() {
+    cdk acknowledge 19836
     pushd /tmp > /dev/null 2>&1; cdk bootstrap "aws://${ACCOUNT_ID}/${AWS_REGION}"; popd > /dev/null 2>&1
 }
 

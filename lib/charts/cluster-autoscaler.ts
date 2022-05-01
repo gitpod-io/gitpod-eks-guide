@@ -16,7 +16,7 @@ export class ClusterAutoscaler extends cdk.Construct {
             release: CLUSTER_AUTOSCALER,
             repository: 'https://kubernetes.github.io/autoscaler',
             namespace: 'kube-system',
-            version: '9.10.8',
+            version: '9.18.0',
             wait: true,
             values: {
                 autoDiscovery: {

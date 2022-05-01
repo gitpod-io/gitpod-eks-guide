@@ -16,7 +16,7 @@ export class Jaeger extends cdk.Construct {
             release: 'jaeger-operator',
             repository: 'https://jaegertracing.github.io/helm-charts',
             namespace: 'jaeger-operator',
-            version: '2.27.0',
+            version: '2.30.0',
             wait: true,
             values: {
                 rbac: {

@@ -11,7 +11,7 @@
     "cdk": "cdk"
   },
   "devDependencies": {
-    "@aws-cdk/assert": "^1.132.0",
+    "@aws-cdk/assert": "^1.154.0",
     "@types/jest": "^27.0.3",
     "@types/js-yaml": "^4.0.5",
     "@types/node": "^16.11.9",
@@ -23,13 +23,13 @@
     "typescript": "^4.5.2"
   },
   "dependencies": {
-    "@aws-cdk/aws-eks": "^1.132.0",
-    "@aws-cdk/aws-iam": "^1.132.0",
-    "@aws-cdk/aws-lambda-nodejs": "^1.133.0",
-    "@aws-cdk/aws-rds": "^1.132.0",
-    "@aws-cdk/aws-secretsmanager": "^1.132.0",
-    "@aws-cdk/core": "^1.132.0",
-    "@aws-sdk/client-secrets-manager": "^3.41.0",
+    "@aws-cdk/aws-eks": "^1.154.0",
+    "@aws-cdk/aws-iam": "^1.154.0",
+    "@aws-cdk/aws-lambda-nodejs": "^1.154.0",
+    "@aws-cdk/aws-rds": "^1.154.0",
+    "@aws-cdk/aws-secretsmanager": "^1.154.0",
+    "@aws-cdk/core": "^1.154.0",
+    "@aws-sdk/client-secrets-manager": "^3.81.0",
     "js-yaml": "^4.1.0",
     "source-map-support": "^0.5.21",
     "sync-request": "^6.1.0",
