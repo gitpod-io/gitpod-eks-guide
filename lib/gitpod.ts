@@ -47,10 +47,10 @@ export class GitpodStack extends Stack {
             manifest.metadata.annotations["alb.ingress.kubernetes.io/subnets"] = `${process.env.ALB_SUBNETS}`;
         }
 
-        const gitpodIngress = new KubernetesManifest(this, "gitpod-ingress", {
-            cluster,
-            overwrite: true,
-            manifest: [manifest],
-        });
+        // const gitpodIngress = new KubernetesManifest(this, "gitpod-ingress", {
+        //     cluster,
+        //     overwrite: true,
+        //     manifest: [manifest],
+        // });
     }
 }

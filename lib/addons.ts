@@ -21,8 +21,9 @@ export class AddonsStack extends cdk.Stack {
         new CertManager(this, 'cert-manager', {
             baseDomain: process.env.DOMAIN,
             email: process.env.LETSENCRYPT_EMAIL,
+            hostedZoneID: process.env.ROUTE53_ZONEID,
         });
         new Jaeger(this, 'jaeger', {});
-        new ExternalDNS(this, 'external-dns',{});
+        // new ExternalDNS(this, 'external-dns',{});
     }
 }

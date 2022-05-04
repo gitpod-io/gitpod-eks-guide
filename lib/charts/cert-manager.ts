@@ -65,7 +65,6 @@ export class CertManager extends cdk.Construct {
             const doc = readYamlDocument(__dirname + '/assets/route53-issuer.yaml');
             const docArray = doc.
                 replace(/{{email}}/g, props.email).
-                replace(/{{baseDomain}}/g, props.baseDomain).
                 replace(/{{hostedZoneID}}/g, props.hostedZoneID).
                 replace(/{{region}}/g, cluster.stack.region);
 

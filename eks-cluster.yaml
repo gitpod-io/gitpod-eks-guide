@@ -69,7 +69,7 @@ privateCluster:
 managedNodeGroups:
   - name: workspaces
     desiredCapacity: 2
-    minSize: 1
+    minSize: 2
     maxSize: 10
     # because of AWS addons
     disableIMDSv1: false

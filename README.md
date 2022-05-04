@@ -105,8 +105,63 @@ make uninstall
 AMI ID's:
 aws ssm get-parameter --name /aws/service/eks/optimized-ami/1.22/amazon-linux-2/recommended/image_id --query "Parameter.Value" --output text
 
+https://aws.amazon.com/blogs/compute/running-gpu-accelerated-kubernetes-workloads-on-p3-and-p2-ec2-instances-with-amazon-eks/
 
 workspace:
   runtime:
     containerdRuntimeDir: /run/containerd/io.containerd.runtime.v1.linux/k8s.io
     containerdSocket: /run/containerd/containerd.sock
+
+
+kubectl auth can-i create deployments --namespace dev
+
+(mrz/gpu-kots) $ kubectl auth can-i list pods \
+ --namespace gitpod \
+ --as system:serviceaccount:kube-system:aws-load-balancer-controller
+yes
+
+kubectl auth can-i list services \
+ --namespace gitpod \
+ --as system:serviceaccount:kube-system:aws-load-balancer-controller
+
+kubectl patch service proxy -n gitpod --type merge --patch \
+"$(cat <<EOF
+spec:
+  type: NodePort
+EOF
+)"
+
+kubectl patch service proxy -n gitpod --type merge --patch \
+"$(cat <<EOF
+spec:
+  type: LoadBalancer
+EOF
+)"
+
+
+kubectl get ns kube-system -o json | jq '.spec.finalizers = []' | kubectl replace --raw "/api/v1/namespaces/kube-system/finalize" -f -
+
+aws eks update-kubeconfig --name
+
+curl https://kots.io/install | bash
+kubectl kots install gitpod
+
+eks guide problems:
+
+changing config settings can break
+
+can't mount s3 storage
+
+cant change cgroup sizes
+
+just keep hupping services until things work
+
+troubleshooting doesn't take into account os variations for log collections
+
+installer doesn't validate before deploy
+
+certificates don't refresh gracefully, some services may need a kick apparently?
+
+can't tell which parts are the guides and which parts are the installer itself, and which parts are kots
+
+the gitpod installer may be sufficient, but currently how we build the configuration file is dumb, we should be labeling keys in kots appropriately so the gitpod installer will load them by default, instead of performing yq in place

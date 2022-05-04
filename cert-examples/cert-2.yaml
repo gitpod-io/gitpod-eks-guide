@@ -1,0 +1,40 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  annotations:
+    kots.io/app-slug: gitpod
+    kots.io/when: "true"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"cert-manager.io/v1","kind":"Certificate","metadata":{"annotations":{"kots.io/app-slug":"gitpod","kots.io/when":"true"},"labels":{"app":"gitpod","component":"gitpod-installer","kots.io/app-slug":"gitpod","kots.io/backup":"velero"},"name":"https-certificates","namespace":"gitpod"},"spec":{"dnsNames":["gitpod.lab.angrydome.org","*.gitpod.lab.angrydome.org","*.ws.gitpod.lab.angrydome.org"],"issuerRef":{"kind":"ClusterIssuer","name":"letsencrypt-prod"},"secretName":"https-certificates"}}
+  creationTimestamp: "2022-05-03T10:27:42Z"
+  generation: 2
+  labels:
+    app: gitpod
+    component: gitpod-installer
+    kots.io/app-slug: gitpod
+    kots.io/backup: velero
+  name: https-certificates
+  namespace: gitpod
+  resourceVersion: "45478"
+  uid: 956b2b14-8fc9-4d81-9200-e751bfee3109
+spec:
+  dnsNames:
+  - gitpod.lab.angrydome.org
+  - '*.gitpod.lab.angrydome.org'
+  - '*.ws.gitpod.lab.angrydome.org'
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
+  secretName: https-certificates
+status:
+  conditions:
+  - lastTransitionTime: "2022-05-03T12:02:24Z"
+    message: Certificate is up to date and has not expired
+    observedGeneration: 2
+    reason: Ready
+    status: "True"
+    type: Ready
+  notAfter: "2022-08-01T11:02:21Z"
+  notBefore: "2022-05-03T11:02:22Z"
+  renewalTime: "2022-07-02T11:02:21Z"
+  revision: 2
