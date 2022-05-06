@@ -5,7 +5,7 @@
 > please fork this guide and amend it to your own needs.
 
 This guide exists as a simple and reliable way of creating an environment in AWS (EKS) that [Gitpod can
-be installed](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod) into. Upon completion, it will print the config for the resources created (including passwords) and create the necessary credential files that will allow you to connect the components created to your gitpod instance during the [next installtion step](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod).
+be installed](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod) into. Upon completion, it will print the config for the resources created (including passwords) and create the necessary credential files that will allow you to connect the components created to your Gitpod instance during the [next installation step](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod).
 
 ## Provision an EKS cluster
 
