@@ -70,7 +70,6 @@ The whole process takes around forty minutes. In the end, the following resource
 - [cluster-autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
 - [Jaeger operator](https://github.com/jaegertracing/helm-charts/tree/main/charts/jaeger-operator) - and Jaeger deployment for gitpod distributed tracing
 - [metrics-server](https://github.com/kubernetes-sigs/metrics-server)
-- [gitpod.io](https://github.com/gitpod-io/gitpod) deployment
 - A public DNS zone managed by Route53 (if `ROUTE53_ZONEID` env variable is configured)
 
 
