@@ -5,7 +5,6 @@ import 'source-map-support/register';
 import { App } from '@aws-cdk/core';
 import { ServicesStack } from '../lib/services';
 import { AddonsStack } from '../lib/addons';
-import { GitpodStack } from '../lib/gitpod';
 import { SetupStack } from '../lib/setup';
 
 const app = new App({});
@@ -23,11 +22,6 @@ if (!domain) {
 const identityoidcissuer = app.node.tryGetContext('identityoidcissuer');
 if (!identityoidcissuer) {
   throw new Error("identityoidcissuer is not defined.");
-}
-
-const certificateArn = app.node.tryGetContext('certificatearn');
-if (!certificateArn) {
-  throw new Error("certificateArn is not defined.");
 }
 
 const env = {
@@ -50,10 +44,3 @@ const services = new ServicesStack(app, 'Services', {
 })
 services.node.addDependency(setup);
 
-const gitpod = new GitpodStack(app, 'Gitpod', {
-  env,
-  domain,
-  certificateArn,
-})
-gitpod.node.addDependency(services);
-gitpod.node.addDependency(addons);

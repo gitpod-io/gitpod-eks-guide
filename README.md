@@ -20,13 +20,6 @@ Before starting the installation process, you need:
   - We provide an example of such file [here](.env.example).
 - [Docker](https://docs.docker.com/engine/install/) installed on your machine, or better, a Gitpod workspace :)
 
-### SSL Certificate
-
-Create a public SSL/TLS certificate with [AWS Certificate Manager](https://aws.amazon.com/en/certificate-manager/),
-valid for the `<domain>`, `*.ws.<domain>` and `*.<domain>` Domain names.
-
-Once the certificate is issued and verified, Update the `CERTIFICATE_ARN` field in the `.env` file accordingly.
-
 ### Choose an Amazon Machine Image (AMI)
 
 Please update the `ami` field in the [eks-cluster.yaml](eks-cluster.yaml) file with the proper AMI ID for the region of the cluster.
@@ -73,6 +66,41 @@ The whole process takes around forty minutes. In the end, the following resource
 - [gitpod.io](https://github.com/gitpod-io/gitpod) deployment
 - A public DNS zone managed by Route53 (if `ROUTE53_ZONEID` env variable is configured)
 
+## Post Install
+
+Once this guide is ran to completion, The relevant configuration values are emitted to move forward with the
+[Gitpod installation with kots](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod).
+
+### ALB and SSH Gateway 
+
+You are free to use your own Ingress (thus ALB), and set up SSL termination (with AWS Cert Manager or similar things)
+on the Load Balancer. But as ALB only supports L7 protocols, [SSH Gateway](https://github.com/gitpod-io/gitpod/blob/main/install/installer/docs/workspace-ssh-access.md)
+does not work through it.
+
+For this, A separate `LoadBalancer` service (and thus CLB) can be created (by using the below YAML) specifically
+for `ssh` gateway, and it's external URL should be used for your `*.ssh.ws.<gitpod-domain>` DNS record.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ssh-gateway
+  namespace: default
+  labels:
+    app: gitpod
+    component: ws-proxy
+    kind: service
+spec:
+  ports:
+    - name: ssh
+      protocol: TCP
+      port: 22
+      targetPort: 2200
+  selector:
+    app: gitpod
+    component: ws-proxy
+  type: LoadBalancer
+```
 
 ## Update Gitpod auth providers
 

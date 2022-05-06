@@ -43,11 +43,6 @@ function check_prerequisites() {
     fi
     export EKSCTL_CONFIG
 
-    if [ -z "${CERTIFICATE_ARN}" ]; then
-        echo "Missing CERTIFICATE_ARN environment variable."
-        exit 1;
-    fi
-
     if [ -z "${DOMAIN}" ]; then
         echo "Missing DOMAIN environment variable."
         exit 1;
@@ -80,12 +75,6 @@ function install() {
     check_prerequisites "$1"
     variables_from_context
     ensure_aws_cdk
-
-    # Check the certificate exists
-    if ! ${AWS_CMD} acm describe-certificate --certificate-arn "${CERTIFICATE_ARN}" --region "${AWS_REGION}" >/dev/null 2>&1; then
-        echo "The secret ${CERTIFICATE_ARN} does not exist."
-        exit 1
-    fi
 
     if ! eksctl get cluster "${CLUSTER_NAME}" > /dev/null 2>&1; then
         # https://eksctl.io/usage/managing-nodegroups/
@@ -161,7 +150,6 @@ function install() {
         --context clusterName="${CLUSTER_NAME}" \
         --context region="${AWS_REGION}" \
         --context domain="${DOMAIN}" \
-        --context certificatearn="${CERTIFICATE_ARN}" \
         --context identityoidcissuer="$(${AWS_CMD} eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.identity.oidc.issuer" --output text --region "${AWS_REGION}")" \
         --require-approval never \
         --outputs-file cdk-outputs.json \
@@ -217,10 +205,6 @@ Once Gitpod is installed, and the DNS records are updated, Run the following com
 # remove shiftfs-module-loader container.
 # TODO: remove once the container is removed from the installer
 kubectl patch daemonset ws-daemon --type json -p='[{"op": "remove",  "path": "/spec/template/spec/initContainers/3"}]'
-
-# Use the following URL for DNS
-kubectl get ingress gitpod -o json | jq -r .status.loadBalancer.ingress[0].hostname
-EOF
 }
 
 
@@ -243,7 +227,6 @@ function uninstall() {
             --context clusterName="${CLUSTER_NAME}" \
             --context region="${AWS_REGION}" \
             --context domain="${DOMAIN}" \
-            --context certificatearn="${CERTIFICATE_ARN}" \
             --context identityoidcissuer="$(${AWS_CMD} eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.identity.oidc.issuer" --output text --region "${AWS_REGION}")" \
             --require-approval never \
             --force \
