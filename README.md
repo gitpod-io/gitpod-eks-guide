@@ -53,7 +53,6 @@ The whole process takes around forty minutes. In the end, the following resource
   - CNI plugins: v0.9.1
   - Stargz Snapshotter: v0.10.0
 
-- ALB load balancer with TLS termination and re-encryption
 - RDS Mysql database
 - Two autoscaling groups, one for gitpod components and another for workspaces
 - In-cluster docker registry using S3 as storage backend
@@ -101,18 +100,6 @@ spec:
     component: ws-proxy
   type: LoadBalancer
 ```
-
-## Update Gitpod auth providers
-
-Please check the [OAuth providers integration documentation](https://www.gitpod.io/docs/self-hosted/latest/configuration/authentication) expected format.
-
-We provide an [example here](./auth-providers-patch.yaml). Fill it with your OAuth providers data.
-
-```console
-make auth
-```
-
-> We are aware of the limitation of this approach, and we are working to improve the helm chart to avoid this step.
 
 ## Destroy the cluster and AWS resources
 

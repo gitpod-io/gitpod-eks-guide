@@ -80,7 +80,7 @@ function install() {
         # https://eksctl.io/usage/managing-nodegroups/
         eksctl create cluster --config-file "${EKSCTL_CONFIG}" --without-nodegroup --kubeconfig ${KUBECONFIG}
     else
-        eksctl utils write-kubeconfig --cluster "${CLUSTER_NAME}"
+        aws eks update-kubeconfig --name "${CLUSTER_NAME}"
     fi
 
     # Disable default AWS CNI provider.
@@ -164,7 +164,7 @@ function output_config() {
   S3_ACCESS_KEY=$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRegistry")).value.AccessKeyId ' < cdk-outputs.json)
   S3_SECRET_KEY=$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRegistry")).value.SecretAccessKey ' < cdk-outputs.json)
 
-  cat << EOF
+  cat << NEXTSTEPS
 
 ==========================
 🎉🥳🔥🧡🚀
@@ -199,12 +199,21 @@ TLS Certificates
 Issuer name: gitpod-selfsigned-issuer
 Issuer type: Issuer
 
+The guide to start the Gitpod installer starts here:
+https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod
+
+The first commands will be:
+
+curl https://kots.io/install | bash
+kubectl kots install gitpod -n gitpod
 
 Once Gitpod is installed, and the DNS records are updated, Run the following commands:
 
 # remove shiftfs-module-loader container.
 # TODO: remove once the container is removed from the installer
 kubectl patch daemonset ws-daemon --type json -p='[{"op": "remove",  "path": "/spec/template/spec/initContainers/3"}]'
+NEXTSTEPS
+
 }
 
 
@@ -232,8 +241,15 @@ function uninstall() {
             --force \
             --all \
         && cdk context --clear \
-        && eksctl delete cluster "${CLUSTER_NAME}" \
+        && eksctl delete cluster "${CLUSTER_NAME}" --wait \
         && ${AWS_CMD} ssm delete-parameter --name "${SSM_KEY}" --region "${AWS_REGION}"
+    cat << UNINSTALL
+=====
+Remove Registry Bucket with aws commands:
+aws s3 rm s3://${CONTAINER_REGISTRY_BUCKET} --recursive
+aws s3 rb s3://${CONTAINER_REGISTRY_BUCKET} --force
+=====
+UNINSTALL
     fi
 }
 
