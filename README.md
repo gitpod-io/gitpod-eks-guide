@@ -1,8 +1,11 @@
 # Running Gitpod in [Amazon EKS](https://aws.amazon.com/en/eks/)
 
-> **IMPORTANT** This guide exists as a simple and reliable way of creating a Gitpod instance in Amazon EKS. It
+> **IMPORTANT** This guide exists as a simple and reliable way of creating required AWS infrastructure. It
 > is not designed to cater for every situation. If you find that it does not meet your exact needs,
 > please fork this guide and amend it to your own needs.
+
+This guide exists as a simple and reliable way of creating an environment in AWS (EKS) that [Gitpod can
+be installed](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod) into. Upon completion, it will print the config for the resources created (including passwords) and create the necessary credential files that will allow you to connect the components created to your Gitpod instance during the [next installation step](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod).
 
 ## Provision an EKS cluster
 
@@ -67,53 +70,8 @@ The whole process takes around forty minutes. In the end, the following resource
 - [cluster-autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
 - [Jaeger operator](https://github.com/jaegertracing/helm-charts/tree/main/charts/jaeger-operator) - and Jaeger deployment for gitpod distributed tracing
 - [metrics-server](https://github.com/kubernetes-sigs/metrics-server)
-- [gitpod.io](https://github.com/gitpod-io/gitpod) deployment
 - A public DNS zone managed by Route53 (if `ROUTE53_ZONEID` env variable is configured)
 
-## Verify the installation
-
-First, check that Gitpod components are running.
-
-```shell
-kubectl get pods
-NAME                               READY   STATUS    RESTARTS   AGE
-blobserve-6bdb9c7f89-lvhxd         2/2     Running   0          6m17s
-content-service-59bd58bc4d-xgv48   1/1     Running   0          6m17s
-dashboard-6ffdf8984-b6f7j          1/1     Running   0          6m17s
-image-builder-5df5694848-wsdvk     3/3     Running   0          6m16s
-jaeger-8679bf6676-zz57m            1/1     Running   0          4h28m
-messagebus-0                       1/1     Running   0          4h11m
-proxy-56c4cdd799-bbfbx             1/1     Running   0          5m33s
-registry-6b75f99844-bhhqd          1/1     Running   0          4h11m
-registry-facade-f7twj              2/2     Running   0          6m12s
-server-64f9cf6b9b-bllgg            2/2     Running   0          6m16s
-ws-daemon-bh6h6                    2/2     Running   0          2m47s
-ws-manager-5d57746845-t74n5        2/2     Running   0          6m16s
-ws-manager-bridge-79f7fcb5-7w4p5   1/1     Running   0          6m16s
-ws-proxy-7fc9665-rchr9             1/1     Running   0          5m57s
-```
-
-TODO: add additional `kubectl log` commands
-
-### Test Gitpod workspaces
-
-When the provisioning and configuration of the cluster is done, the script shows the URL of the load balancer,
-like:
-
-```shell
-Load balancer hostname: k8s-default-gitpod-.......elb.amazonaws.com
-```
-
-This is the value of the `CNAME` field that needs to be configured in the DNS domain, for the record `<domain>`, `*.ws.<domain>` and `*.<domain>`
-
-After these three records are configured, please open the URL `https://<domain>/workspaces`.
-It should display the gitpod login page similar to the next image.
-
-> If the property `ROUTE53_ZONEID` is enabled in the .env file, we install [external-dns](https://github.com/kubernetes-sigs/external-dns) and such update is not required
-
-![Gitpod login page](./images/gitpod-login.png "Gitpod Login Page")
-
-----
 
 ## Update Gitpod auth providers
 
