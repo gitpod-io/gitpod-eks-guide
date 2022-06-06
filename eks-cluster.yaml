@@ -10,7 +10,7 @@ metadata:
   name: gitpod
   # Template, please change
   region: us-west-2
-  version: "1.21"
+  version: "1.22"
 
 iam:
   withOIDC: true
@@ -32,10 +32,6 @@ iam:
       wellKnownPolicies:
         autoScaler: true
 
-availabilityZones:
-  - us-west-2a
-  - us-west-2b
-  - us-west-2c
 
 # By default we create a dedicated VPC for the cluster
 # You can use an existing VPC by supplying private and/or public subnets. Please check
@@ -61,114 +57,92 @@ privateCluster:
 
 managedNodeGroups:
   - name: workspaces
-    desiredCapacity: 1
+    amiFamily: Ubuntu2004
+    spot: false
+    instanceTypes: ["m6i.xlarge", "m6i.2xlarge"]
+    desiredCapacity: 2
     minSize: 1
     maxSize: 10
-    # because of AWS addons
+    maxPodsPerNode: 110
     disableIMDSv1: false
-    # Please configure the size of the volume and additional features
-    # https://eksctl.io/usage/schema/#nodeGroups-volumeType
-    # https://aws.amazon.com/es/ebs/pricing/
     volumeSize: 300
     volumeType: gp3
     volumeIOPS: 6000
     volumeThroughput: 500
     ebsOptimized: true
-    # Use private subnets for nodes
-    # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-009935ddbb32a7f3c
+    propagateASGTags: true
 
-    tags:
-      # EC2 tags required for cluster-autoscaler auto-discovery
-      k8s.io/cluster-autoscaler/enabled: "true"
-      k8s.io/cluster-autoscaler/gitpod: "owned"
     iam:
-      attachPolicyARNs: &attachPolicyARNs
+      attachPolicyARNs:
         - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
         - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
         - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
         - arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-      withAddonPolicies: &withAddonPolicies
+      withAddonPolicies:
+        albIngress: true
+        autoScaler: true
+        cloudWatch: true
+        ebs: true
+
+    tags:
+      k8s.io/cluster-autoscaler/enabled: "true"
+      k8s.io/cluster-autoscaler/gitpod: "owned"
+
+    labels:
+      gitpod.io/workload_workspace_regular: "true"
+      gitpod.io/workload_workspace_services: "true"
+      gitpod.io/workload_workspace_headless: "true"
+
+    # using prebootstrap commands to let us insert containerd without
+    # defining a specific AMI, should be redundant in EKS 1.23 when
+    preBootstrapCommands: 
+      - echo "export USE_MAX_PODS=false" >> /etc/profile.d/bootstrap.sh
+      - echo "export CONTAINER_RUNTIME=containerd" >> /etc/profile.d/bootstrap.sh
+      - sed -i '/^set -o errexit/a\\nsource /etc/profile.d/bootstrap.sh' /etc/eks/bootstrap.sh
+
+
+  - name: services
+    amiFamily: Ubuntu2004
+    spot: false
+    instanceTypes: ["m6i.xlarge"]
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 4
+    maxPodsPerNode: 110
+    disableIMDSv1: false
+    volumeSize: 300
+    volumeType: gp3
+    volumeIOPS: 6000
+    volumeThroughput: 500
+    ebsOptimized: true
+    privateNetworking: true
+    propagateASGTags: true
+
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      withAddonPolicies:
         albIngress: true
         autoScaler: true
         cloudWatch: true
         certManager: true
         ebs: true
-    # Using custom AMI images require the definition of overrideBootstrapCommand
-    # to ensure that nodes are able to join the cluster https://eksctl.io/usage/custom-ami-support/
-    overrideBootstrapCommand: |
-      #!/bin/bash
-
-      export CLUSTERNAME=gitpod
-      export NODEGROUP=workspaces
-
-      declare -a LABELS=(
-        eks.amazonaws.com/nodegroup="${NODEGROUP}"
-        gitpod.io/workload_workspace_services=true
-        gitpod.io/workload_workspace_regular=true
-        gitpod.io/workload_workspace_headless=true
-      )
-
-      export KUBELET_EXTRA_ARGS="$(printf -- "--max-pods=110 --node-labels=%s" $(IFS=$','; echo "${LABELS[*]}"))"
-      /etc/eks/bootstrap.sh ${CLUSTERNAME}
-
-    spot: false
-    # https://eksctl.io/usage/instance-selector/
-    #instanceSelector:
-    #  vCPUs: 8
-    #  memory: 64Gib
-    # or use a custom list
-    instanceTypes: ["m6i.xlarge", "m6i.2xlarge"]
-
-  - name: services
-    desiredCapacity: 1
-    minSize: 1
-    maxSize: 3
-    # because of AWS addons
-    disableIMDSv1: false
-    # Please configure the size of the volume and additional features
-    # https://eksctl.io/usage/schema/#nodeGroups-volumeType
-    # https://aws.amazon.com/es/ebs/pricing/
-    volumeSize: 100
-    volumeType: gp3
-    volumeIOPS: 6000
-    volumeThroughput: 500
-    ebsOptimized: true
-    # Use private subnets for nodes
-    # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
-    privateNetworking: true
-    ami: ami-009935ddbb32a7f3c
 
     tags:
-      # EC2 tags required for cluster-autoscaler auto-discovery
       k8s.io/cluster-autoscaler/enabled: "true"
       k8s.io/cluster-autoscaler/gitpod: "owned"
-    iam:
-      attachPolicyARNs: *attachPolicyARNs
-      withAddonPolicies: *withAddonPolicies
-    # Using custom AMI images require the definition of overrideBootstrapCommand
-    # to ensure that nodes are able to join the cluster https://eksctl.io/usage/custom-ami-support/
-    overrideBootstrapCommand: |
-      #!/bin/bash
 
-      export CLUSTERNAME=gitpod
-      export NODEGROUP=services
-
-      declare -a LABELS=(
-        eks.amazonaws.com/nodegroup="${NODEGROUP}"
-        gitpod.io/workload_meta=true
-        gitpod.io/workload_ide=true
-      )
-
-      export KUBELET_EXTRA_ARGS="$(printf -- "--max-pods=110 --node-labels=%s" $(IFS=$','; echo "${LABELS[*]}"))"
-      /etc/eks/bootstrap.sh ${CLUSTERNAME}
-
-    spot: false
-    # https://eksctl.io/usage/instance-selector/
-    #instanceSelector:
-    #  vCPUs: 4
-    #  memory: 16Gib
-    # or use a custom list
-    instanceTypes: ["m6i.xlarge", "m6i.2xlarge"]
+    labels:
+      gitpod.io/workload_meta: "true"
+      gitpod.io/workload_ide: "true"
+    
+    preBootstrapCommands: 
+      - echo "export USE_MAX_PODS=false" >> /etc/profile.d/bootstrap.sh
+      - echo "export CONTAINER_RUNTIME=containerd" >> /etc/profile.d/bootstrap.sh
+      - sed -i '/^set -o errexit/a\\nsource /etc/profile.d/bootstrap.sh' /etc/eks/bootstrap.sh
