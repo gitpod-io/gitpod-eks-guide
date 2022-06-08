@@ -1,14 +1,8 @@
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
-  # Template, please change
-  # Please make sure you also update the definition of the variable
-  # CLUSTERNAME=<cluster name> in the overrideBootstrapCommand section
-  # and k8s.io/cluster-autoscaler/<cluster name>: "owned"
-  # cluster-autoscaler will not be require additional labels in a future release.
-  # https://github.com/kubernetes/autoscaler/pull/3968
   name: gitpod
-  # Template, please change
+  # Template, please change to your region of choice
   region: us-west-2
   version: "1.22"
 
