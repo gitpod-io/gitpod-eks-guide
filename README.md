@@ -33,13 +33,7 @@ make install
 The whole process takes around forty minutes. In the end, the following resources are created:
 
 - an EKS cluster running Kubernetes v1.21
-- Kubernetes nodes using a custom [AMI image](https://github.com/gitpod-io/amazon-eks-custom-amis/tree/gitpod):
-  - Ubuntu 21.10
-  - Linux kernel v5.13
-  - containerd v1.5.8
-  - runc: v1.0.1
-  - CNI plugins: v0.9.1
-  - Stargz Snapshotter: v0.10.0
+- Kubernetes nodes using the [Ubuntu2004 EKS image](https://docs.aws.amazon.com/eks/latest/userguide/eks-partner-amis.html)
 
 - RDS Mysql database
 - Two autoscaling groups, one for gitpod components and another for workspaces

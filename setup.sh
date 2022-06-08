@@ -188,7 +188,7 @@ Username: ${MYSQL_GITPOD_USERNAME}
 Password: ${MYSQL_GITPOD_PASSWORD}
 Port: 3306
 
-Container Registry Storage
+Container Registry and Object Storage
 ========
 S3 BUCKET NAME: ${CONTAINER_REGISTRY_BUCKET}
 S3 ACCESS KEY: ${S3_ACCESS_KEY}
