@@ -20,23 +20,11 @@ Before starting the installation process, you need:
   - We provide an example of such file [here](.env.example).
 - [Docker](https://docs.docker.com/engine/install/) installed on your machine, or better, a Gitpod workspace :)
 
-### Choose an Amazon Machine Image (AMI)
-
-Please update the `ami` field in the [eks-cluster.yaml](eks-cluster.yaml) file with the proper AMI ID for the region of the cluster.
-
-| Region       | AMI                   |
-| ------------ | --------------------- |
-| us-west-1    | ami-04e9afc0a981cac90 |
-| us-west-2    | ami-009935ddbb32a7f3c |
-| eu-west-1    | ami-0f08b4b1a4fd3ebe3 |
-| eu-west-2    | ami-05f027fd3d0187541 |
-| eu-central-1 | ami-04a8127c830f27712 |
-| us-east-1    | ami-076db8ca29c04327b |
-| us-east-2    | ami-0ad574da759c55c17 |
 
 **To start the installation, execute:**
 
 ```shell
+make build
 make install
 ```
 
@@ -45,15 +33,8 @@ make install
 The whole process takes around forty minutes. In the end, the following resources are created:
 
 - an EKS cluster running Kubernetes v1.21
-- Kubernetes nodes using a custom [AMI image](https://github.com/gitpod-io/amazon-eks-custom-amis/tree/gitpod):
-  - Ubuntu 21.10
-  - Linux kernel v5.13
-  - containerd v1.5.8
-  - runc: v1.0.1
-  - CNI plugins: v0.9.1
-  - Stargz Snapshotter: v0.10.0
+- Kubernetes nodes using the [Ubuntu2004 EKS image](https://docs.aws.amazon.com/eks/latest/userguide/eks-partner-amis.html)
 
-- ALB load balancer with TLS termination and re-encryption
 - RDS Mysql database
 - Two autoscaling groups, one for gitpod components and another for workspaces
 - In-cluster docker registry using S3 as storage backend
@@ -101,18 +82,6 @@ spec:
     component: ws-proxy
   type: LoadBalancer
 ```
-
-## Update Gitpod auth providers
-
-Please check the [OAuth providers integration documentation](https://www.gitpod.io/docs/self-hosted/latest/configuration/authentication) expected format.
-
-We provide an [example here](./auth-providers-patch.yaml). Fill it with your OAuth providers data.
-
-```console
-make auth
-```
-
-> We are aware of the limitation of this approach, and we are working to improve the helm chart to avoid this step.
 
 ## Destroy the cluster and AWS resources
 

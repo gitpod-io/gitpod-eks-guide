@@ -34,12 +34,6 @@ export class Registry extends cdk.Stack {
             policyName: 'GitpodS3Access',
             statements: [
                 new iam.PolicyStatement({
-                    resources: ['*'],
-                    actions: [
-                        "s3:*",
-                    ],
-                }),
-                new iam.PolicyStatement({
                     resources: [`${registryBucket.bucketArn}`],
                     actions: [
                         "s3:ListBucket",
@@ -61,7 +55,7 @@ export class Registry extends cdk.Stack {
         });
 
         const storage = new iam.Group(this, 'RegistryStorage', {
-            groupName: 'RegistryStorage',
+            groupName: `RegistryStorage-${props.clusterName}`.toLowerCase(),
         });
         storage.attachInlinePolicy(GitpodRegistryAccess);
 
