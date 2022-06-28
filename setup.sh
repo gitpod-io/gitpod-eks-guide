@@ -80,7 +80,7 @@ function install() {
         # https://eksctl.io/usage/managing-nodegroups/
         eksctl create cluster --config-file "${EKSCTL_CONFIG}" --without-nodegroup --kubeconfig ${KUBECONFIG}
     else
-        aws eks update-kubeconfig --name "${CLUSTER_NAME}"
+        aws eks update-kubeconfig --region "${AWS_REGION}" --name "${CLUSTER_NAME}"
     fi
 
     # Disable default AWS CNI provider.
@@ -88,8 +88,9 @@ function install() {
     # https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt
     # https://docs.aws.amazon.com/eks/latest/userguide/pod-networking.html
     kubectl patch ds -n kube-system aws-node -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
-    # Install Calico.
+    # Install Calico - https://projectcalico.docs.tigera.io/getting-started/kubernetes/managed-public-cloud/eks
     kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
+    kubectl -n kube-system set env daemonset/calico-node FELIX_AWSSRCDSTCHECK=Disable
 
     # Create secret with container registry credentials
     if [ -n "${IMAGE_PULL_SECRET_FILE}" ] && [ -f "${IMAGE_PULL_SECRET_FILE}" ]; then
@@ -151,6 +152,7 @@ function install() {
         --context region="${AWS_REGION}" \
         --context domain="${DOMAIN}" \
         --context identityoidcissuer="$(${AWS_CMD} eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.identity.oidc.issuer" --output text --region "${AWS_REGION}")" \
+        --context certificatearn="${CERTIFICATE_ARN}" \
         --require-approval never \
         --outputs-file cdk-outputs.json \
         --all
@@ -237,6 +239,7 @@ function uninstall() {
             --context region="${AWS_REGION}" \
             --context domain="${DOMAIN}" \
             --context identityoidcissuer="$(${AWS_CMD} eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.identity.oidc.issuer" --output text --region "${AWS_REGION}")" \
+            --context certificatearn="${CERTIFICATE_ARN}" \
             --require-approval never \
             --force \
             --all \

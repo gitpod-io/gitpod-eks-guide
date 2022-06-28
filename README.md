@@ -5,7 +5,7 @@
 > please fork this guide and amend it to your own needs.
 
 This guide exists as a simple and reliable way of creating an environment in AWS (EKS) that [Gitpod can
-be installed](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod) into.
+be installed](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod) into. Upon completion, it will print the config for the resources created (including passwords) and create the necessary credential files that will allow you to connect the components created to your Gitpod instance during the [next installation step](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod).
 
 ## Provision an EKS cluster
 
@@ -44,8 +44,9 @@ The whole process takes around forty minutes. In the end, the following resource
 - [cluster-autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
 - [Jaeger operator](https://github.com/jaegertracing/helm-charts/tree/main/charts/jaeger-operator) - and Jaeger deployment for gitpod distributed tracing
 - [metrics-server](https://github.com/kubernetes-sigs/metrics-server)
-- [gitpod.io](https://github.com/gitpod-io/gitpod) deployment
 - A public DNS zone managed by Route53 (if `ROUTE53_ZONEID` env variable is configured)
+- a Let's Encrypt certificate issuer with automatic Route 53 dns challenge (if `ROUTE53_ZONEID` and `LETSENCRYPT_EMAIL` env variables are configured)
+- an Application LoadBalancer (ALB) backed 'ingress' k8s resource with automatic Route 53 DNS hostnames and AWS ACM SSL certificate (if `ROUTE53_ZONEID` and `CERTIFICATE_ARN` env variables are configured)
 
 ## Post Install
 

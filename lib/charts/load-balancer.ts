@@ -14,7 +14,7 @@ export class AWSLoadBalancerController extends cdk.Construct {
             release: AWS_LOAD_BALANCER_CONTROLLER,
             repository: 'https://aws.github.io/eks-charts',
             namespace: 'kube-system',
-            version: '1.3.1',
+            version: '1.4.2',
             wait: true,
             values: {
                 replicaCount: 1,

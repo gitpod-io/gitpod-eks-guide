@@ -6,6 +6,7 @@ import { App } from '@aws-cdk/core';
 import { ServicesStack } from '../lib/services';
 import { AddonsStack } from '../lib/addons';
 import { SetupStack } from '../lib/setup';
+import { GitpodStack } from '../lib/gitpod';
 
 const app = new App({});
 
@@ -44,3 +45,11 @@ const services = new ServicesStack(app, 'Services', {
 })
 services.node.addDependency(setup);
 
+const certificateArn = app.node.tryGetContext('certificatearn')
+const gitpod = new GitpodStack(app, 'Gitpod', {
+  env,
+  domain,
+  certificateArn,
+})
+gitpod.node.addDependency(services);
+gitpod.node.addDependency(addons);
