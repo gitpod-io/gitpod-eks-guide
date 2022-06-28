@@ -86,6 +86,16 @@ spec:
   type: LoadBalancer
 ```
 
+## Update Gitpod auth providers
+
+Please check the [OAuth providers integration documentation](https://www.gitpod.io/docs/self-hosted/latest/configuration/authentication) expected format.
+
+We provide an [example here](./auth-providers-patch.yaml). Fill it with your OAuth providers data.
+
+```console
+make auth
+```
+
 ## Destroy the cluster and AWS resources
 
 Remove Cloudformation stacks and EKS cluster running:
