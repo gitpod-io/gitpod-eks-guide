@@ -29,7 +29,7 @@ export class ContainerInsights extends cdk.Construct {
             release: 'aws-for-fluent-bit',
             repository: 'https://aws.github.io/eks-charts',
             namespace,
-            version: '0.1.11',
+            version: '0.1.17',
             values: {
                 serviceAccount: {
                     create: false,

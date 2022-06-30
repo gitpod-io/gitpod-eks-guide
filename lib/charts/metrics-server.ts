@@ -13,7 +13,7 @@ export class MetricsServer extends cdk.Construct {
             release: 'metrics-server',
             repository: 'https://charts.bitnami.com/bitnami',
             namespace: 'kube-system',
-            version: '5.10.10',
+            version: '5.10.14',
             wait: true,
             values: {
                 hostNetwork: true,

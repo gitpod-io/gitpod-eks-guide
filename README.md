@@ -20,30 +20,11 @@ Before starting the installation process, you need:
   - We provide an example of such file [here](.env.example).
 - [Docker](https://docs.docker.com/engine/install/) installed on your machine, or better, a Gitpod workspace :)
 
-### SSL Certificate
-
-Create a public SSL/TLS certificate with [AWS Certificate Manager](https://aws.amazon.com/en/certificate-manager/),
-valid for the `<domain>`, `*.ws.<domain>` and `*.<domain>` Domain names.
-
-Once the certificate is issued and verified, Update the `CERTIFICATE_ARN` field in the `.env` file accordingly.
-
-### Choose an Amazon Machine Image (AMI)
-
-Please update the `ami` field in the [eks-cluster.yaml](eks-cluster.yaml) file with the proper AMI ID for the region of the cluster.
-
-| Region       | AMI                   |
-| ------------ | --------------------- |
-| us-west-1    | ami-04e9afc0a981cac90 |
-| us-west-2    | ami-009935ddbb32a7f3c |
-| eu-west-1    | ami-0f08b4b1a4fd3ebe3 |
-| eu-west-2    | ami-05f027fd3d0187541 |
-| eu-central-1 | ami-04a8127c830f27712 |
-| us-east-1    | ami-076db8ca29c04327b |
-| us-east-2    | ami-0ad574da759c55c17 |
 
 **To start the installation, execute:**
 
 ```shell
+make build
 make install
 ```
 
@@ -52,15 +33,8 @@ make install
 The whole process takes around forty minutes. In the end, the following resources are created:
 
 - an EKS cluster running Kubernetes v1.21
-- Kubernetes nodes using a custom [AMI image](https://github.com/gitpod-io/amazon-eks-custom-amis/tree/gitpod):
-  - Ubuntu 21.10
-  - Linux kernel v5.13
-  - containerd v1.5.8
-  - runc: v1.0.1
-  - CNI plugins: v0.9.1
-  - Stargz Snapshotter: v0.10.0
+- Kubernetes nodes using the [Ubuntu2004 EKS image](https://docs.aws.amazon.com/eks/latest/userguide/eks-partner-amis.html)
 
-- ALB load balancer with TLS termination and re-encryption
 - RDS Mysql database
 - Two autoscaling groups, one for gitpod components and another for workspaces
 - In-cluster docker registry using S3 as storage backend
@@ -70,8 +44,47 @@ The whole process takes around forty minutes. In the end, the following resource
 - [cluster-autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
 - [Jaeger operator](https://github.com/jaegertracing/helm-charts/tree/main/charts/jaeger-operator) - and Jaeger deployment for gitpod distributed tracing
 - [metrics-server](https://github.com/kubernetes-sigs/metrics-server)
-- A public DNS zone managed by Route53 (if `ROUTE53_ZONEID` env variable is configured)
+- a Let's Encrypt certificate issuer with automatic Route 53 DNS-01 challenges (if `ROUTE53_ZONEID` and `LETSENCRYPT_EMAIL` env variables are configured)
+- an Application LoadBalancer (ALB) backed 'ingress' K8S resource with automatic Route 53 DNS and AWS ACM SSL certificate (if `CREATE_LB`, `ROUTE53_ZONEID` and `CERTIFICATE_ARN` env variables are configured)
+- a Network LoadBalancer (NLB) backed 'service' K8S resource with automatic Route 53 DNS for Remote SSH Workspace Access (if `CREATE_LB` and `ROUTE53_ZONEID` env variables are configured)
 
+## Post Install
+
+Once this guide is ran to completion, The relevant configuration values are emitted to move forward with the
+[Gitpod installation with kots](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod).
+
+### ALB and SSH Gateway
+
+*** Please ignore this section if you have the `CREATE_LB` env variable set to `true`. The guide will create these object for you. ***
+
+You are free to use your own Ingress (thus ALB), and set up SSL termination (with AWS Cert Manager or similar things)
+on the Load Balancer. But as ALB only supports L7 protocols, [SSH Gateway](https://github.com/gitpod-io/gitpod/blob/main/install/installer/docs/workspace-ssh-access.md)
+does not work through it.
+
+For this, A separate `LoadBalancer` service (and thus CLB) can be created (by using the below YAML) specifically
+for `ssh` gateway, and it's external URL should be used for your `*.ssh.ws.<gitpod-domain>` DNS record.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ssh-gateway
+  namespace: default
+  labels:
+    app: gitpod
+    component: ws-proxy
+    kind: service
+spec:
+  ports:
+    - name: ssh
+      protocol: TCP
+      port: 22
+      targetPort: 2200
+  selector:
+    app: gitpod
+    component: ws-proxy
+  type: LoadBalancer
+```
 
 ## Update Gitpod auth providers
 
@@ -82,8 +95,6 @@ We provide an [example here](./auth-providers-patch.yaml). Fill it with your OAu
 ```console
 make auth
 ```
-
-> We are aware of the limitation of this approach, and we are working to improve the helm chart to avoid this step.
 
 ## Destroy the cluster and AWS resources
 

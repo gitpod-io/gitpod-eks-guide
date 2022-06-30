@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ssh-gateway
+  namespace: {{namespace}}
+  labels:
+    app: gitpod
+    component: ws-proxy
+    kind: service
+  annotations:
+    kubernetes.io/ingress.class: nlb
+spec:
+  ports:
+    - name: ssh
+      protocol: TCP
+      port: 22
+      targetPort: 2200
+  selector:
+    app: gitpod
+    component: ws-proxy
+  type: LoadBalancer
