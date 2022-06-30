@@ -1,11 +1,9 @@
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: gitpod
   annotations:
-    kubernetes.io/ingress.class: "alb"
-    alb.ingress.kubernetes.io/actions.ssl-redirect: >-
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/actions.ssl-redirect: |-
       {
         "Type": "redirect",
         "RedirectConfig": {
@@ -14,26 +12,27 @@ metadata:
           "StatusCode": "HTTP_301"
         }
       }
-    alb.ingress.kubernetes.io/tags: Purpose=Gitpod,Service=proxy
-    alb.ingress.kubernetes.io/target-node-labels: gitpod.io/workload_workspace_services=true
-    alb.ingress.kubernetes.io/healthcheck-protocol: HTTPS
     alb.ingress.kubernetes.io/backend-protocol: HTTPS
-    alb.ingress.kubernetes.io/listen-ports: >-
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTPS
+    alb.ingress.kubernetes.io/listen-ports: |-
       [{
         "HTTP": 80
       }, {
         "HTTPS": 443
       }]
-    alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=30
     alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=3600
+    alb.ingress.kubernetes.io/tags: Purpose=Gitpod,Service=proxy
+    alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=30
+    alb.ingress.kubernetes.io/target-node-labels: gitpod.io/workload_workspace_services=true
+  name: gitpod
 spec:
   rules:
-    - http:
-        paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: proxy
-              port:
-                number: 443
+  - http:
+      paths:
+      - backend:
+          service:
+            name: proxy
+            port:
+              number: 443
+        path: /
+        pathType: Prefix

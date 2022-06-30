@@ -43,7 +43,7 @@ export class ExternalDNS extends cdk.Construct {
             release: 'external-dns',
             repository: 'https://charts.bitnami.com/bitnami',
             namespace: EXTERNAL_DNS_NAMESPACE,
-            version: '5.5.0',
+            version: '6.5.1',
             values: {
                 podSecurityContext: {
                     fsGroup: 65534,
@@ -64,7 +64,10 @@ export class ExternalDNS extends cdk.Construct {
                     preferCNAME: false,
                     evaluateTargetHealth: false,
                 },
-                txtOwnerId: process.env.ROUTE53_ZONEID
+                txtOwnerId: process.env.ROUTE53_ZONEID,
+                extraArgs:  {
+                    source: 'service',
+                },
             }
         });
 

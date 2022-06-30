@@ -1,16 +1,11 @@
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
-  # Template, please change
-  # Please make sure you also update the definition of the variable
-  # CLUSTERNAME=<cluster name> in the overrideBootstrapCommand section
-  # and k8s.io/cluster-autoscaler/<cluster name>: "owned"
-  # cluster-autoscaler will not be require additional labels in a future release.
-  # https://github.com/kubernetes/autoscaler/pull/3968
+  # If changing the cluster name, don't forget to update in the nodegroups' bootstrap.sh commands as well!
   name: gitpod
-  # Template, please change
+  # Template, please change to your region of choice
   region: us-west-2
-  version: "1.21"
+  version: "1.22"
 
 iam:
   withOIDC: true
@@ -32,10 +27,6 @@ iam:
       wellKnownPolicies:
         autoScaler: true
 
-availabilityZones:
-  - us-west-2a
-  - us-west-2b
-  - us-west-2c
 
 # By default we create a dedicated VPC for the cluster
 # You can use an existing VPC by supplying private and/or public subnets. Please check
@@ -61,114 +52,119 @@ privateCluster:
 
 managedNodeGroups:
   - name: workspaces
-    desiredCapacity: 1
+    ami: ami-0f1564db62fff025e
+    spot: false
+    instanceTypes: ["m6i.xlarge", "m6i.2xlarge"]
+    desiredCapacity: 2
     minSize: 1
     maxSize: 10
-    # because of AWS addons
     disableIMDSv1: false
-    # Please configure the size of the volume and additional features
-    # https://eksctl.io/usage/schema/#nodeGroups-volumeType
-    # https://aws.amazon.com/es/ebs/pricing/
     volumeSize: 300
     volumeType: gp3
     volumeIOPS: 6000
     volumeThroughput: 500
     ebsOptimized: true
-    # Use private subnets for nodes
-    # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
     privateNetworking: true
-    ami: ami-009935ddbb32a7f3c
+    propagateASGTags: true
+    # Node SSH access (optional)
+    # ssh:
+    #   # auto-imports ~/.ssh/id_rsa.pub as authorized_key
+    #   allow: true
 
-    tags:
-      # EC2 tags required for cluster-autoscaler auto-discovery
-      k8s.io/cluster-autoscaler/enabled: "true"
-      k8s.io/cluster-autoscaler/gitpod: "owned"
     iam:
-      attachPolicyARNs: &attachPolicyARNs
+      attachPolicyARNs:
         - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
         - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
         - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
         - arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-      withAddonPolicies: &withAddonPolicies
+      withAddonPolicies:
+        albIngress: true
+        autoScaler: true
+        cloudWatch: true
+        ebs: true
+
+    tags:
+      k8s.io/cluster-autoscaler/enabled: "true"
+      k8s.io/cluster-autoscaler/gitpod: "owned"
+
+    labels:
+      gitpod.io/workload_workspace_regular: "true"
+      gitpod.io/workload_workspace_services: "true"
+      gitpod.io/workload_workspace_headless: "true"
+
+    overrideBootstrapCommand: |
+      #!/bin/bash
+      source /var/lib/cloud/scripts/eksctl/bootstrap.helper.sh
+      /etc/eks/bootstrap.sh gitpod --container-runtime containerd --use-max-pods false --kubelet-extra-args "--node-labels=${NODE_LABELS}"
+      # Update containerd config
+      apt-get update && apt-get install -y python3-pip
+      pip3 install toml mergedeep
+      /usr/bin/env python3 - << EOF > /var/log/update-containerd-config-out.txt 2>&1
+      import toml
+      from mergedeep import merge
+      c = toml.load('/etc/containerd/config.toml')
+      merge(c, {'plugins': {'io.containerd.grpc.v1.cri': {'registry': {'config_path': '/etc/containerd/certs.d'}}}})
+      with open('/etc/containerd/config.toml', 'w') as f:
+          toml.dump(c, f)
+      EOF
+      service containerd restart
+
+  - name: service
+    ami: ami-0f1564db62fff025e
+    spot: false
+    instanceTypes: ["m6i.xlarge"]
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 4
+    disableIMDSv1: false
+    volumeSize: 300
+    volumeType: gp3
+    volumeIOPS: 6000
+    volumeThroughput: 500
+    ebsOptimized: true
+    privateNetworking: true
+    propagateASGTags: true
+    # Node SSH access (optional)
+    # ssh:
+    #   # auto-imports ~/.ssh/id_rsa.pub as authorized_key
+    #   allow: true
+
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      withAddonPolicies:
         albIngress: true
         autoScaler: true
         cloudWatch: true
         certManager: true
         ebs: true
-    # Using custom AMI images require the definition of overrideBootstrapCommand
-    # to ensure that nodes are able to join the cluster https://eksctl.io/usage/custom-ami-support/
-    overrideBootstrapCommand: |
-      #!/bin/bash
-
-      export CLUSTERNAME=gitpod
-      export NODEGROUP=workspaces
-
-      declare -a LABELS=(
-        eks.amazonaws.com/nodegroup="${NODEGROUP}"
-        gitpod.io/workload_workspace_services=true
-        gitpod.io/workload_workspace_regular=true
-        gitpod.io/workload_workspace_headless=true
-      )
-
-      export KUBELET_EXTRA_ARGS="$(printf -- "--max-pods=110 --node-labels=%s" $(IFS=$','; echo "${LABELS[*]}"))"
-      /etc/eks/bootstrap.sh ${CLUSTERNAME}
-
-    spot: false
-    # https://eksctl.io/usage/instance-selector/
-    #instanceSelector:
-    #  vCPUs: 8
-    #  memory: 64Gib
-    # or use a custom list
-    instanceTypes: ["m6i.xlarge", "m6i.2xlarge"]
-
-  - name: services
-    desiredCapacity: 1
-    minSize: 1
-    maxSize: 3
-    # because of AWS addons
-    disableIMDSv1: false
-    # Please configure the size of the volume and additional features
-    # https://eksctl.io/usage/schema/#nodeGroups-volumeType
-    # https://aws.amazon.com/es/ebs/pricing/
-    volumeSize: 100
-    volumeType: gp3
-    volumeIOPS: 6000
-    volumeThroughput: 500
-    ebsOptimized: true
-    # Use private subnets for nodes
-    # https://eksctl.io/usage/vpc-networking/#use-private-subnets-for-initial-nodegroup
-    privateNetworking: true
-    ami: ami-009935ddbb32a7f3c
 
     tags:
-      # EC2 tags required for cluster-autoscaler auto-discovery
       k8s.io/cluster-autoscaler/enabled: "true"
       k8s.io/cluster-autoscaler/gitpod: "owned"
-    iam:
-      attachPolicyARNs: *attachPolicyARNs
-      withAddonPolicies: *withAddonPolicies
-    # Using custom AMI images require the definition of overrideBootstrapCommand
-    # to ensure that nodes are able to join the cluster https://eksctl.io/usage/custom-ami-support/
+
+    labels:
+      gitpod.io/workload_meta: "true"
+      gitpod.io/workload_ide: "true"
+
     overrideBootstrapCommand: |
       #!/bin/bash
-
-      export CLUSTERNAME=gitpod
-      export NODEGROUP=services
-
-      declare -a LABELS=(
-        eks.amazonaws.com/nodegroup="${NODEGROUP}"
-        gitpod.io/workload_meta=true
-        gitpod.io/workload_ide=true
-      )
-
-      export KUBELET_EXTRA_ARGS="$(printf -- "--max-pods=110 --node-labels=%s" $(IFS=$','; echo "${LABELS[*]}"))"
-      /etc/eks/bootstrap.sh ${CLUSTERNAME}
-
-    spot: false
-    # https://eksctl.io/usage/instance-selector/
-    #instanceSelector:
-    #  vCPUs: 4
-    #  memory: 16Gib
-    # or use a custom list
-    instanceTypes: ["m6i.xlarge", "m6i.2xlarge"]
+      source /var/lib/cloud/scripts/eksctl/bootstrap.helper.sh
+      /etc/eks/bootstrap.sh gitpod --container-runtime containerd --use-max-pods false --kubelet-extra-args "--node-labels=${NODE_LABELS}"
+      # Update containerd config
+      apt-get update && apt-get install -y python3-pip
+      pip3 install toml mergedeep
+      /usr/bin/env python3 - << EOF > /var/log/update-containerd-config-out.txt  2>&1
+      import toml
+      from mergedeep import merge
+      c = toml.load('/etc/containerd/config.toml')
+      merge(c, {'plugins': {'io.containerd.grpc.v1.cri': {'registry': {'config_path': '/etc/containerd/certs.d'}}}})
+      with open('/etc/containerd/config.toml', 'w') as f:
+          toml.dump(c, f)
+      EOF
+      service containerd restart
