@@ -205,21 +205,26 @@ Username: ${MYSQL_GITPOD_USERNAME}
 Password: ${MYSQL_GITPOD_PASSWORD}
 Port: 3306
 
-Container Registry
-==================
+Container Registry - S3 Storage provider
+========================================
+S3 Storage Region: ${AWS_REGION}
+S3 Endpoint URL: s3.${AWS_REGION}.amazonaws.com
 S3 BUCKET NAME: ${CONTAINER_REGISTRY_BUCKET}
 S3 ACCESS KEY: ${REGISTRY_S3_ACCESS_KEY}
 S3 SECRET KEY: ${REGISTRY_S3_SECRET_KEY}
 
-Object Storage
-==============
+Object Storage - S3 Storage provider
+====================================
+S3 Storage Region: ${AWS_REGION}
+S3 Endpoint URL: s3.${AWS_REGION}.amazonaws.com
 S3 BUCKET NAME: ${OBJECT_STORE_BUCKET}
 S3 ACCESS KEY: ${OBJECT_STORE_S3_ACCESS_KEY}
 S3 SECRET KEY: ${OBJECT_STORE_S3_SECRET_KEY}
 
 TLS Certificates
 ================
-# Let's Encrypt & Route53 (only if enabled through .env)
+# Let's Encrypt & Route53 automated public certificate issuer (e-mail must be provided in .env)
+# Note: if using AWS Certificate Manager and provided a "CERTIFICATE_ARN", simply select "Use a self-signed TLS certificate" on the KOTS configuration page.
 Issuer name: gitpod-issuer
 Issuer type: ClusterIssuer
 
