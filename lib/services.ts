@@ -4,6 +4,7 @@ import * as ec2 from '@aws-cdk/aws-ec2'
 
 import { Database } from './database';
 import { Registry } from './registry';
+import { ObjectStore } from './object-store';
 
 export class ServicesStack extends cdk.Stack {
     //readonly registry: Registry
@@ -31,7 +32,14 @@ export class ServicesStack extends cdk.Stack {
             env: props.env,
             clusterName: `${process.env.CLUSTER_NAME}`,
             bucketName: `${process.env.CONTAINER_REGISTRY_BUCKET}`,
-            createBucket: process.env.CREATE_S3_BUCKET === 'true',
+            createBucket: process.env.CREATE_REGISTRY_S3_BUCKET === 'true',
+        });
+
+        const objectStore = new ObjectStore(this, 'ObjectStore', {
+            env: props.env,
+            clusterName: `${process.env.CLUSTER_NAME}`,
+            bucketName: `${process.env.OBJECT_STORE_BUCKET}`,
+            createBucket: process.env.CREATE_OBJECT_STORE_S3_BUCKET === 'true',
         });
     }
 }

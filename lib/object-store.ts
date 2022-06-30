@@ -4,20 +4,20 @@ import { RemovalPolicy } from '@aws-cdk/core';
 import * as iam from '@aws-cdk/aws-iam';
 import { CfnAccessKey } from '@aws-cdk/aws-iam';
 
-export interface RegistryProps extends cdk.StackProps {
+export interface ObjectStoreProps extends cdk.StackProps {
     readonly clusterName: string
     readonly bucketName: string
     readonly createBucket: boolean
 }
 
-export class Registry extends cdk.Stack {
-    constructor(scope: cdk.Construct, id: string, props: RegistryProps) {
+export class ObjectStore extends cdk.Stack {
+    constructor(scope: cdk.Construct, id: string, props: ObjectStoreProps) {
         super(scope, id, props);
 
-        let registryBucket: IBucket;
+        let bucket: IBucket;
 
         if (props.createBucket) {
-            registryBucket = new Bucket(this, "RegistryBucket", {
+            bucket = new Bucket(this, "ObjectStoreBucket", {
                 encryption: BucketEncryption.KMS_MANAGED,
                 bucketName: props.bucketName,
                 publicReadAccess: false,
@@ -25,42 +25,40 @@ export class Registry extends cdk.Stack {
                 removalPolicy: RemovalPolicy.RETAIN
             });
         } else {
-            registryBucket = Bucket.fromBucketAttributes(this, 'RegistryBucket', {
+            bucket = Bucket.fromBucketAttributes(this, 'ObjectStoreBucket', {
                 bucketArn: `arn:aws:s3:::${props.bucketName}`,
             });
         }
 
-        const GitpodRegistryAccess = new iam.Policy(this, 'RegistryAccess', {
-            policyName: 'GitpodRegistryS3Access',
+        const GitpodRegistryAccess = new iam.Policy(this, 'ObjectStoreAccess', {
+            policyName: 'GitpodObjectStoreS3Access',
             statements: [
                 new iam.PolicyStatement({
-                    resources: [`${registryBucket.bucketArn}`],
+                    resources: [`${bucket.bucketArn}`],
                     actions: [
-                        "s3:ListBucket",
-                        "s3:GetBucketLocation",
-                        "s3:ListBucketMultipartUploads"
+                        // TODO: revise
+                        "s3:*",
+                        "s3-object-lambda:*"
                     ],
                 }),
                 new iam.PolicyStatement({
-                    resources: [`${registryBucket.bucketArn}/*`],
+                    resources: [`${bucket.bucketArn}/*`],
                     actions: [
-                        "s3:PutObject",
-                        "s3:GetObject",
-                        "s3:DeleteObject",
-                        "s3:ListMultipartUploadParts",
-                        "s3:AbortMultipartUpload"
+                        // TODO: revise
+                        "s3:*",
+                        "s3-object-lambda:*"
                     ],
                 }),
             ],
         });
 
-        const storage = new iam.Group(this, 'RegistryStorage', {
-            groupName: `RegistryStorage-${props.clusterName}`.toLowerCase(),
+        const storage = new iam.Group(this, 'ObjectStoreS3Storage', {
+            groupName: `ObjectStoreS3Storage-${props.clusterName}`.toLowerCase(),
         });
         storage.attachInlinePolicy(GitpodRegistryAccess);
 
-        const userName = `registry-storage-${props.clusterName}`.toLowerCase();
-        const user = new iam.User(this, 'GitpodIAMUserRegistryS3', {
+        const userName = `object-store-storage-${props.clusterName}`.toLowerCase();
+        const user = new iam.User(this, 'GitpodIAMUserObjectStoreS3', {
             userName,
             groups: [storage]
         });
@@ -70,13 +68,13 @@ export class Registry extends cdk.Stack {
         });
         accessKey.node.addDependency(user);
 
-        new cdk.CfnOutput(this, "RegistryAccessKeyId", {
+        new cdk.CfnOutput(this, "ObjectStoreAccessKeyId", {
             value: accessKey.ref,
-            exportName: "RegistryAccessKeyId",
+            exportName: "ObjectStoreAccessKeyId",
         });
-        new cdk.CfnOutput(this, "RegistrySecretAccessKey", {
+        new cdk.CfnOutput(this, "ObjectStoreSecretAccessKey", {
             value: accessKey.attrSecretAccessKey,
-            exportName: "RegistrySecretAccessKey",
+            exportName: "ObjectStoreSecretAccessKey",
         });
     }
 }
