@@ -15,22 +15,34 @@ function variables_from_context() {
 
     ACCOUNT_ID=$(${AWS_CMD} sts get-caller-identity | jq -r .Account)
 
-    # use the default bucket?
+    # use the default registry bucket?
     if [ -z "${CONTAINER_REGISTRY_BUCKET}" ]; then
         CONTAINER_REGISTRY_BUCKET="container-registry-${CLUSTER_NAME}-${ACCOUNT_ID}"
     fi
 
-    CREATE_S3_BUCKET="false"
+    CREATE_REGISTRY_S3_BUCKET="false"
     if ! "${AWS_CMD}" s3api head-bucket --bucket "${CONTAINER_REGISTRY_BUCKET}" >/dev/null 2>&1; then
-        CREATE_S3_BUCKET="true"
+        CREATE_REGISTRY_S3_BUCKET="true"
+    fi
+
+    # use the default object storage bucket?
+    if [ -z "${OBJECT_STORE_BUCKET}" ]; then
+        OBJECT_STORE_BUCKET="object-storage-${CLUSTER_NAME}-${ACCOUNT_ID}"
+    fi
+
+    CREATE_OBJECT_STORE_S3_BUCKET="false"
+    if ! "${AWS_CMD}" s3api head-bucket --bucket "${OBJECT_STORE_BUCKET}" >/dev/null 2>&1; then
+        CREATE_OBJECT_STORE_S3_BUCKET="true"
     fi
 
     export KUBECONFIG
     export CLUSTER_NAME
     export AWS_REGION
     export ACCOUNT_ID
-    export CREATE_S3_BUCKET
+    export CREATE_REGISTRY_S3_BUCKET
+    export CREATE_OBJECT_STORE_S3_BUCKET
     export CONTAINER_REGISTRY_BUCKET
+    export OBJECT_STORE_BUCKET
 }
 
 function check_prerequisites() {
@@ -80,7 +92,7 @@ function install() {
         # https://eksctl.io/usage/managing-nodegroups/
         eksctl create cluster --config-file "${EKSCTL_CONFIG}" --without-nodegroup --kubeconfig ${KUBECONFIG}
     else
-        aws eks update-kubeconfig --name "${CLUSTER_NAME}"
+        aws eks update-kubeconfig --region "${AWS_REGION}" --name "${CLUSTER_NAME}"
     fi
 
     # Disable default AWS CNI provider.
@@ -88,8 +100,9 @@ function install() {
     # https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt
     # https://docs.aws.amazon.com/eks/latest/userguide/pod-networking.html
     kubectl patch ds -n kube-system aws-node -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
-    # Install Calico.
+    # Install Calico - https://projectcalico.docs.tigera.io/getting-started/kubernetes/managed-public-cloud/eks
     kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
+    kubectl -n kube-system set env daemonset/calico-node FELIX_AWSSRCDSTCHECK=Disable
 
     # Create secret with container registry credentials
     if [ -n "${IMAGE_PULL_SECRET_FILE}" ] && [ -f "${IMAGE_PULL_SECRET_FILE}" ]; then
@@ -151,6 +164,7 @@ function install() {
         --context region="${AWS_REGION}" \
         --context domain="${DOMAIN}" \
         --context identityoidcissuer="$(${AWS_CMD} eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.identity.oidc.issuer" --output text --region "${AWS_REGION}")" \
+        --context certificatearn="${CERTIFICATE_ARN}" \
         --require-approval never \
         --outputs-file cdk-outputs.json \
         --all
@@ -161,8 +175,11 @@ function install() {
 function output_config() {
 
   MYSQL_HOST=$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRDS")).value.MysqlEndpoint ' < cdk-outputs.json)
-  S3_ACCESS_KEY=$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRegistry")).value.AccessKeyId ' < cdk-outputs.json)
-  S3_SECRET_KEY=$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRegistry")).value.SecretAccessKey ' < cdk-outputs.json)
+  REGISTRY_S3_ACCESS_KEY=$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRegistry")).value.RegistryAccessKeyId ' < cdk-outputs.json)
+  REGISTRY_S3_SECRET_KEY=$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRegistry")).value.RegistrySecretAccessKey ' < cdk-outputs.json)
+  OBJECT_STORE_S3_ACCESS_KEY=$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRegistry")).value.ObjectStoreAccessKeyId ' < cdk-outputs.json)
+  OBJECT_STORE_S3_SECRET_KEY=$(jq -r '. | to_entries[] | select(.key | startswith("ServicesRegistry")).value.ObjectStoreSecretAccessKey ' < cdk-outputs.json)
+
 
   cat << NEXTSTEPS
 
@@ -188,16 +205,23 @@ Username: ${MYSQL_GITPOD_USERNAME}
 Password: ${MYSQL_GITPOD_PASSWORD}
 Port: 3306
 
-Container Registry and Object Storage
-========
+Container Registry
+==================
 S3 BUCKET NAME: ${CONTAINER_REGISTRY_BUCKET}
-S3 ACCESS KEY: ${S3_ACCESS_KEY}
-S3 SECRET KEY: ${S3_SECRET_KEY}
+S3 ACCESS KEY: ${REGISTRY_S3_ACCESS_KEY}
+S3 SECRET KEY: ${REGISTRY_S3_SECRET_KEY}
+
+Object Storage
+==============
+S3 BUCKET NAME: ${OBJECT_STORE_BUCKET}
+S3 ACCESS KEY: ${OBJECT_STORE_S3_ACCESS_KEY}
+S3 SECRET KEY: ${OBJECT_STORE_S3_SECRET_KEY}
 
 TLS Certificates
 ================
-Issuer name: gitpod-selfsigned-issuer
-Issuer type: Issuer
+# Let's Encrypt & Route53 (only if enabled through .env)
+Issuer name: gitpod-issuer
+Issuer type: ClusterIssuer
 
 The guide to start the Gitpod installer starts here:
 https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod
@@ -237,6 +261,7 @@ function uninstall() {
             --context region="${AWS_REGION}" \
             --context domain="${DOMAIN}" \
             --context identityoidcissuer="$(${AWS_CMD} eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.identity.oidc.issuer" --output text --region "${AWS_REGION}")" \
+            --context certificatearn="${CERTIFICATE_ARN}" \
             --require-approval never \
             --force \
             --all \
@@ -245,9 +270,13 @@ function uninstall() {
         && ${AWS_CMD} ssm delete-parameter --name "${SSM_KEY}" --region "${AWS_REGION}"
     cat << UNINSTALL
 =====
-Remove Registry Bucket with aws commands:
+Remove Registry S3 Bucket with aws commands:
 aws s3 rm s3://${CONTAINER_REGISTRY_BUCKET} --recursive
 aws s3 rb s3://${CONTAINER_REGISTRY_BUCKET} --force
+
+Remove Object Storage S3 Bucket with aws commands:
+aws s3 rm s3://${OBJECT_STORE_BUCKET} --recursive
+aws s3 rb s3://${OBJECT_STORE_BUCKET} --force
 =====
 UNINSTALL
     fi

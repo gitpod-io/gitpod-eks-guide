@@ -20,6 +20,7 @@ export class AddonsStack extends cdk.Stack {
         new MetricsServer(this, 'metrics-server', {});
         new CertManager(this, 'cert-manager', {
             baseDomain: process.env.DOMAIN,
+            hostedZoneID: process.env.ROUTE53_ZONEID,
             email: process.env.LETSENCRYPT_EMAIL,
         });
         new Jaeger(this, 'jaeger', {});

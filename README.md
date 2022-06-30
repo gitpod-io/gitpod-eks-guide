@@ -5,7 +5,7 @@
 > please fork this guide and amend it to your own needs.
 
 This guide exists as a simple and reliable way of creating an environment in AWS (EKS) that [Gitpod can
-be installed](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod) into.
+be installed](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod) into. Upon completion, it will print the config for the resources created (including passwords) and create the necessary credential files that will allow you to connect the components created to your Gitpod instance during the [next installation step](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod).
 
 ## Provision an EKS cluster
 
@@ -44,15 +44,18 @@ The whole process takes around forty minutes. In the end, the following resource
 - [cluster-autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
 - [Jaeger operator](https://github.com/jaegertracing/helm-charts/tree/main/charts/jaeger-operator) - and Jaeger deployment for gitpod distributed tracing
 - [metrics-server](https://github.com/kubernetes-sigs/metrics-server)
-- [gitpod.io](https://github.com/gitpod-io/gitpod) deployment
-- A public DNS zone managed by Route53 (if `ROUTE53_ZONEID` env variable is configured)
+- a Let's Encrypt certificate issuer with automatic Route 53 DNS-01 challenges (if `ROUTE53_ZONEID` and `LETSENCRYPT_EMAIL` env variables are configured)
+- an Application LoadBalancer (ALB) backed 'ingress' K8S resource with automatic Route 53 DNS and AWS ACM SSL certificate (if `CREATE_LB`, `ROUTE53_ZONEID` and `CERTIFICATE_ARN` env variables are configured)
+- a Network LoadBalancer (NLB) backed 'service' K8S resource with automatic Route 53 DNS for Remote SSH Workspace Access (if `CREATE_LB` and `ROUTE53_ZONEID` env variables are configured)
 
 ## Post Install
 
 Once this guide is ran to completion, The relevant configuration values are emitted to move forward with the
 [Gitpod installation with kots](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod).
 
-### ALB and SSH Gateway 
+### ALB and SSH Gateway
+
+*** Please ignore this section if you have the `CREATE_LB` env variable set to `true`. The guide will create these object for you. ***
 
 You are free to use your own Ingress (thus ALB), and set up SSL termination (with AWS Cert Manager or similar things)
 on the Load Balancer. But as ALB only supports L7 protocols, [SSH Gateway](https://github.com/gitpod-io/gitpod/blob/main/install/installer/docs/workspace-ssh-access.md)
@@ -81,6 +84,16 @@ spec:
     app: gitpod
     component: ws-proxy
   type: LoadBalancer
+```
+
+## Update Gitpod auth providers
+
+Please check the [OAuth providers integration documentation](https://www.gitpod.io/docs/self-hosted/latest/configuration/authentication) expected format.
+
+We provide an [example here](./auth-providers-patch.yaml). Fill it with your OAuth providers data.
+
+```console
+make auth
 ```
 
 ## Destroy the cluster and AWS resources

@@ -1,6 +1,7 @@
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
+  # If changing the cluster name, don't forget to update in the nodegroups' bootstrap.sh commands as well!
   name: gitpod
   # Template, please change to your region of choice
   region: us-west-2
@@ -51,13 +52,12 @@ privateCluster:
 
 managedNodeGroups:
   - name: workspaces
-    amiFamily: Ubuntu2004
+    ami: ami-0f1564db62fff025e
     spot: false
     instanceTypes: ["m6i.xlarge", "m6i.2xlarge"]
     desiredCapacity: 2
     minSize: 1
     maxSize: 10
-    maxPodsPerNode: 110
     disableIMDSv1: false
     volumeSize: 300
     volumeType: gp3
@@ -66,6 +66,10 @@ managedNodeGroups:
     ebsOptimized: true
     privateNetworking: true
     propagateASGTags: true
+    # Node SSH access (optional)
+    # ssh:
+    #   # auto-imports ~/.ssh/id_rsa.pub as authorized_key
+    #   allow: true
 
     iam:
       attachPolicyARNs:
@@ -89,22 +93,30 @@ managedNodeGroups:
       gitpod.io/workload_workspace_services: "true"
       gitpod.io/workload_workspace_headless: "true"
 
-    # using prebootstrap commands to let us insert containerd without
-    # defining a specific AMI, should be redundant in EKS 1.23 when
-    preBootstrapCommands: 
-      - echo "export USE_MAX_PODS=false" >> /etc/profile.d/bootstrap.sh
-      - echo "export CONTAINER_RUNTIME=containerd" >> /etc/profile.d/bootstrap.sh
-      - sed -i '/^set -o errexit/a\\nsource /etc/profile.d/bootstrap.sh' /etc/eks/bootstrap.sh
+    overrideBootstrapCommand: |
+      #!/bin/bash
+      source /var/lib/cloud/scripts/eksctl/bootstrap.helper.sh
+      /etc/eks/bootstrap.sh gitpod --container-runtime containerd --use-max-pods false --kubelet-extra-args "--node-labels=${NODE_LABELS}"
+      # Update containerd config
+      apt-get update && apt-get install -y python3-pip
+      pip3 install toml mergedeep
+      /usr/bin/env python3 - << EOF > /var/log/update-containerd-config-out.txt 2>&1
+      import toml
+      from mergedeep import merge
+      c = toml.load('/etc/containerd/config.toml')
+      merge(c, {'plugins': {'io.containerd.grpc.v1.cri': {'registry': {'config_path': '/etc/containerd/certs.d'}}}})
+      with open('/etc/containerd/config.toml', 'w') as f:
+          toml.dump(c, f)
+      EOF
+      service containerd restart
 
-
-  - name: services
-    amiFamily: Ubuntu2004
+  - name: service
+    ami: ami-0f1564db62fff025e
     spot: false
     instanceTypes: ["m6i.xlarge"]
     desiredCapacity: 2
     minSize: 1
     maxSize: 4
-    maxPodsPerNode: 110
     disableIMDSv1: false
     volumeSize: 300
     volumeType: gp3
@@ -113,6 +125,10 @@ managedNodeGroups:
     ebsOptimized: true
     privateNetworking: true
     propagateASGTags: true
+    # Node SSH access (optional)
+    # ssh:
+    #   # auto-imports ~/.ssh/id_rsa.pub as authorized_key
+    #   allow: true
 
     iam:
       attachPolicyARNs:
@@ -135,8 +151,20 @@ managedNodeGroups:
     labels:
       gitpod.io/workload_meta: "true"
       gitpod.io/workload_ide: "true"
-    
-    preBootstrapCommands: 
-      - echo "export USE_MAX_PODS=false" >> /etc/profile.d/bootstrap.sh
-      - echo "export CONTAINER_RUNTIME=containerd" >> /etc/profile.d/bootstrap.sh
-      - sed -i '/^set -o errexit/a\\nsource /etc/profile.d/bootstrap.sh' /etc/eks/bootstrap.sh
+
+    overrideBootstrapCommand: |
+      #!/bin/bash
+      source /var/lib/cloud/scripts/eksctl/bootstrap.helper.sh
+      /etc/eks/bootstrap.sh gitpod --container-runtime containerd --use-max-pods false --kubelet-extra-args "--node-labels=${NODE_LABELS}"
+      # Update containerd config
+      apt-get update && apt-get install -y python3-pip
+      pip3 install toml mergedeep
+      /usr/bin/env python3 - << EOF > /var/log/update-containerd-config-out.txt  2>&1
+      import toml
+      from mergedeep import merge
+      c = toml.load('/etc/containerd/config.toml')
+      merge(c, {'plugins': {'io.containerd.grpc.v1.cri': {'registry': {'config_path': '/etc/containerd/certs.d'}}}})
+      with open('/etc/containerd/config.toml', 'w') as f:
+          toml.dump(c, f)
+      EOF
+      service containerd restart
