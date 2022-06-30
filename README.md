@@ -55,7 +55,13 @@ Once this guide is ran to completion, The relevant configuration values are emit
 
 ### ALB and SSH Gateway
 
-*** Please ignore this section if you have the `CREATE_LB` env variable set to `true`. The guide will create these object for you. ***
+***
+**Important**: Please ignore the following section if you have the `CREATE_LB` env variable set to `true`. The guide will create load balancers for you.
+
+In this case, we just need to let the Gitpod installer know that we use our own Load Balancers, so it will not create its internal 'proxy' component as an AWS Classic LoadBalancer, but use `NodePort` type that works well with our external ALB & NLB load-balancers.
+
+Simply upload the provided `extra-config-patch.yaml` configuration file to KOTS within the "Additional Options" configuration section using the "Gitpod config patch (YAML file)" file input field.
+***
 
 You are free to use your own Ingress (thus ALB), and set up SSL termination (with AWS Cert Manager or similar things)
 on the Load Balancer. But as ALB only supports L7 protocols, [SSH Gateway](https://github.com/gitpod-io/gitpod/blob/main/install/installer/docs/workspace-ssh-access.md)
