@@ -21,20 +21,22 @@ export class GitpodStack extends Stack {
         if (!process.env.CREATE_LB) {
             return;
         }
-
         const cluster = importCluster(this, process.env.CLUSTER_NAME);
-        const namespace = process.env.NAMESPACE
-        if (!namespace) {
+
+        const namespaceName = process.env.NAMESPACE
+        if (!namespaceName) {
             throw new Error('Namespace is not defined.');
         }
+        const namespace = createNamespace(namespaceName, cluster);
 
-        const ns = createNamespace(namespace, cluster);
+        const ingress = this.createIngress(props, cluster, namespaceName);
+        ingress.node.addDependency(namespace);
 
-        this.createIngress(props, cluster, namespace);
-        this.createSshGatewayService(props, cluster, namespace);
+        const service = this.createSshGatewayService(props, cluster, namespaceName);
+        service.node.addDependency(namespace)
     }
 
-    private createIngress(props: GitpodProps, cluster: ICluster, namespace: string) {
+    private createIngress(props: GitpodProps, cluster: ICluster, namespace: string): KubernetesManifest {
         const doc = readYamlDocument(__dirname + '/charts/assets/ingress.yaml');
         const manifest = loadYaml(doc) as any;
 
@@ -66,14 +68,14 @@ export class GitpodStack extends Stack {
         }
 
         manifest.metadata.namespace = namespace;
-        new KubernetesManifest(this, 'gitpod-ingress', {
+        return new KubernetesManifest(this, 'gitpod-ingress', {
             cluster,
             overwrite: true,
             manifest: [manifest],
         });
     }
 
-    private createSshGatewayService(props: GitpodProps, cluster: ICluster, namespace: string) {
+    private createSshGatewayService(props: GitpodProps, cluster: ICluster, namespace: string): KubernetesManifest {
         const doc = readYamlDocument(__dirname + '/charts/assets/ssh-gateway.yaml');
         const manifest = loadYaml(doc) as any;
 
@@ -87,7 +89,7 @@ export class GitpodStack extends Stack {
         }
 
         manifest.metadata.namespace = namespace;
-        new KubernetesManifest(this, 'gitpod-svc-ssh-gateway', {
+        return new KubernetesManifest(this, 'gitpod-svc-ssh-gateway', {
             cluster,
             overwrite: true,
             manifest: [manifest],
