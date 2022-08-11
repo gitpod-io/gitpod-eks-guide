@@ -33,7 +33,7 @@ export class GitpodStack extends Stack {
         ingress.node.addDependency(namespace);
 
         const service = this.createSshGatewayService(props, cluster, namespaceName);
-        service.node.addDependency(namespace)
+        service.node.addDependency(namespace);
     }
 
     private createIngress(props: GitpodProps, cluster: ICluster, namespace: string): KubernetesManifest {
