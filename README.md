@@ -1,3 +1,13 @@
+## 📣 [IMPORTANT] This repo is being deprecated in favor of [Gitpod reference architecture](https://www.gitpod.io/docs/self-hosted/latest/reference-architecture/single-cluster-ref-arch) and the corresponding [terraform module](https://github.com/gitpod-io/gitpod/tree/main/install/infra/single-cluster/aws). 
+
+We have decided to deprecate this module after serving its purpose for almost over a year. We are deeply sorry for any inconvenience this might have caused, but we believe this shift adds a lot of value and ultimately makes setting up Gitpod a much smoother experience.
+
+Overtime, the number of issues the users of this guide run into has risen significantly, and the maintenance of the same has proven to be challenging for us. Moreover, the setup this guide offers is not flexible enough if the user wishes to customise the infrastructure being created. The maintenance of the created infrastructure can be difficult since the guide doesn't provide any continued support.
+
+Hence, after thorough consideration, we have decided to move to a more `Infrastructure as Code(IaC)` solution by providing `terraform` modules that can setup and provision an EKS Kubernetes Cluster for installing Gitpod. We expect moving to such a popular community solution would offer much more flexibility and support for the folks trying to setup Gitpod.
+
+As Gitpod has continued to offer a frictionless development experience, we expect this new solution will provide a frictionless setup experience for the users. We are very excited about this new phase of Gitpod setup and maintenance. 🤩
+
 # Running Gitpod in [Amazon EKS](https://aws.amazon.com/en/eks/)
 
 > **IMPORTANT** This guide exists as a simple and reliable way of creating required AWS infrastructure. It
