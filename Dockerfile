@@ -21,7 +21,7 @@ RUN curl -fsSL https://github.com/mikefarah/yq/releases/download/v4.12.0/yq_linu
 
 RUN curl -fsSL https://github.com/weaveworks/eksctl/releases/download/v0.100.0/eksctl_Linux_amd64.tar.gz | tar -xz -C /usr/local/bin
 
-RUN curl -fsSL "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl \
+RUN curl -fsSL "https://dl.k8s.io/release/v1.22.9/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl \
   && chmod +x /usr/local/bin/kubectl
 
 WORKDIR /gitpod

@@ -64,7 +64,10 @@ export class ExternalDNS extends cdk.Construct {
                     preferCNAME: false,
                     evaluateTargetHealth: false,
                 },
-                txtOwnerId: process.env.ROUTE53_ZONEID
+                txtOwnerId: process.env.ROUTE53_ZONEID,
+                extraArgs:  {
+                    source: 'service',
+                },
             }
         });
 
