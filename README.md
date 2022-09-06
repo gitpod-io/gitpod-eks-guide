@@ -1,4 +1,33 @@
-# Running Gitpod in [Amazon EKS](https://aws.amazon.com/en/eks/)
+
+ ## 📣 [IMPORTANT] This repo is being deprecated in favor of the [single cluster reference architecture](https://www.gitpod.io/docs/self-hosted/latest/reference-architecture/single-cluster-ref-arch) and the corresponding [Terraform config](https://github.com/gitpod-io/gitpod/tree/main/install/infra/single-cluster/aws).
+
+**What?** 
+
+We are deprecating this guide in favor of our [reference architectures](https://www.gitpod.io/docs/self-hosted/latest/reference-architecture) (specifically the [single cluster variant](https://www.gitpod.io/docs/self-hosted/latest/reference-architecture/single-cluster-ref-arch)) that include both a guided walk-through and a `Terraform` configuration.
+
+**Why?**
+
+From your feedback, we’ve learned that the guide has several shortcomings:
+
+- It is not obvious what the guide does: it is more a black box than a sensible starting point for creating the infrastructure that works for you.
+- One size fits all: it was not flexible enough if you wish to customize the infrastructure being created.
+- No incremental upgrades: If a version of a component changes, you’d have to recreate the infrastructure.
+
+Due to the feedback above we’ve decided to move to a more open and industry-standard way of speaking about the recommended infrastructure in the form of our new [reference architectures](https://www.gitpod.io/docs/self-hosted/latest/reference-architecture/single-cluster-ref-arch). These are descriptions of what the ideal infrastructure for Gitpod looks like depending on your circumstances. They include both a text version as well as a Terraform configuration that helps you create this infrastructure automatically - similarly to this guide. We believe these provide the following benefits: 
+
+- They are based on a popular `Infrastructure as Code (IaC)` solution (`Terraform`), which should facilitate maintenance for you (and us) via features such as incremental upgrades.
+- They are easier to parse, as they are configuration files rather than a script. This should make customizations easier.
+- They provide a detailed walkthrough for those that do not want to use Terraform.
+- We already leverage these in our nightly testing to provide further validation and reliability of them when used to run Gitpod.
+
+**Impact?**
+
+Going forward, Gitpod will only officially support the [reference architectures](https://www.gitpod.io/docs/self-hosted/latest/reference-architecture/single-cluster-ref-arch). If you can, we would advise you to switch towards using these - this would require you to recreate your infrastructure using the new Terraform configurations or guide. Staying on infrastructure created by this guide *should* work going forward, however, we cannot guarantee this in perpetuity.
+
+—> The Reference Architectures are still in `beta` or `alpha` while we gather more feedback. Please do reach out to us on Discord or via [support](https://www.gitpod.io/support) with any problems or feedback.
+
+------
+## Running Gitpod in [Amazon EKS](https://aws.amazon.com/en/eks/)
 
 > **IMPORTANT** This guide exists as a simple and reliable way of creating required AWS infrastructure. It
 > is not designed to cater for every situation. If you find that it does not meet your exact needs,
@@ -7,7 +36,7 @@
 This guide exists as a simple and reliable way of creating an environment in AWS (EKS) that [Gitpod can
 be installed](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod) into. Upon completion, it will print the config for the resources created (including passwords) and create the necessary credential files that will allow you to connect the components created to your Gitpod instance during the [next installation step](https://www.gitpod.io/docs/self-hosted/latest/getting-started#step-4-install-gitpod).
 
-## Provision an EKS cluster
+### Provision an EKS cluster
 
 Before starting the installation process, you need:
 
