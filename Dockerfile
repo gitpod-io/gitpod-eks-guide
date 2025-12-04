@@ -28,9 +28,9 @@ WORKDIR /gitpod
 
 COPY . /gitpod
 
-RUN yarn --pure-lockfile --non-interactive \
+RUN yarn --pure-lockfile --non-interactive --ignore-scripts \
   && rm -rf /usr/local/share/.cache/yarn
 
-RUN npm install -g aws-cdk ts-node
+RUN npm install -g --ignore-scripts aws-cdk ts-node
 
 ENTRYPOINT ["/gitpod/setup.sh"]
